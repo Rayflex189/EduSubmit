@@ -35,13 +35,16 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+AUTH_USER_MODEL = 'submissions.Student'
+
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "submissions,"
+    "submissions",
     "django.contrib.staticfiles",
 ]
 
