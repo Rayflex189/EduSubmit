@@ -1,0 +1,26 @@
+{% include 'base.html' with page_title="Upload Assignment" %}
+
+<body>
+<div class="navbar">📤 Upload Assignment</div>
+
+<div class="container">
+    <div class="card">
+        <h2 style="color:#1E3A8A">Submit Your Assignment</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <label>Course Title</label>
+            <input type="text" name="course" placeholder="CSC 202 – Data Structures">
+
+            <label>Description / Notes</label>
+            <textarea name="description" placeholder="Explain what this assignment covers..."></textarea>
+
+            <label>Select Assignment File</label>
+            <input type="file" name="file">
+
+            <button class="btn">Upload Assignment</button>
+        </form>
+    </div>
+</div>
+</body>

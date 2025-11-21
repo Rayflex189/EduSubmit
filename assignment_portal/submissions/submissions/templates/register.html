@@ -1,0 +1,26 @@
+{% include 'base.html' with page_title="Register" %}
+
+<body>
+<div class="navbar">🎓 Student Registration Portal</div>
+
+<div class="container">
+    <div class="card">
+        <h2 style="color:#1E3A8A">Create Your Account</h2>
+        <p>Register using your matric number and a secure password.</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <label>Full Name</label>
+            <input type="text" name="name" placeholder="e.g John Daniel" required>
+
+            <label>Matric Number</label>
+            <input type="text" name="matric" placeholder="UAT23/03/04/3001" required>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="**********" required>
+
+            <button class="btn">Create Account</button>
+        </form>
+    </div>
+</div>
+</body>

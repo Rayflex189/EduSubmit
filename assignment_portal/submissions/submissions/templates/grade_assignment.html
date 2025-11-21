@@ -1,0 +1,28 @@
+{% include 'base.html' with page_title="Grade Assignment" %}
+
+<body>
+<div class="navbar">📝 Grade Assignment</div>
+
+<div class="container">
+    <div class="card">
+        <h2 style="color:#1E3A8A">Grade Submission</h2>
+
+        <p><strong>Student:</strong> {{ assignment.student.name }}</p>
+        <p><strong>Matric:</strong> {{ assignment.student.matric }}</p>
+        <p><strong>Course:</strong> {{ assignment.course }}</p>
+
+        <a href="{{ assignment.file.url }}"><button class="btn">Download Assignment</button></a>
+
+        <form method="POST">
+            {% csrf_token %}
+            <label>Grade</label>
+            <input type="number" max="100" name="grade">
+
+            <label>Feedback / Comments</label>
+            <textarea name="feedback" placeholder="Write your feedback..."></textarea>
+
+            <button class="btn">Submit Grade</button>
+        </form>
+    </div>
+</div>
+</body>

@@ -1,0 +1,39 @@
+{% include 'base.html' with page_title="Student Dashboard" %}
+
+<body>
+<div class="navbar">🎓 Student Dashboard</div>
+
+<div class="container">
+
+    <h2 style="color:#1E3A8A">Welcome, {{ student.name }}</h2>
+
+    <div class="card">
+        <h3>Your Assignment Overview</h3>
+
+        <p><strong>Total Submitted:</strong> {{ submitted }}</p>
+        <p><strong>Pending Grading:</strong> {{ pending }}</p>
+        <p><strong>Graded:</strong> {{ graded }}</p>
+
+        <a href="/upload-assignment/"><button class="btn">Upload New Assignment</button></a>
+
+        <h3 style="margin-top:20px;">Your Submissions</h3>
+        <table class="table">
+            <tr>
+                <th>Course</th>
+                <th>Date Submitted</th>
+                <th>Status</th>
+                <th>Grade</th>
+            </tr>
+
+            {% for a in assignments %}
+            <tr>
+                <td>{{ a.course }}</td>
+                <td>{{ a.date_submitted }}</td>
+                <td>{{ a.status }}</td>
+                <td>{{ a.grade }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+</body>
