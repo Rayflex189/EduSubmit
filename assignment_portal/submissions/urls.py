@@ -6,6 +6,7 @@ urlpatterns = [
     path('', lambda request: redirect('login')),  # root redirects to login
     path('register/', views.register, name='register'),
     path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.student_dashboard, name='student_dashboard'),
     path('upload/', views.upload_assignment, name='upload_assignment'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),

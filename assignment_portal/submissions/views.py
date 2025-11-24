@@ -58,3 +58,8 @@ def grade_assignment(request, assignment_id):
         assignment.save()
         return redirect('admin_dashboard')
     return render(request, 'submissions/grade_assignment.html', {'assignment': assignment})
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('login')

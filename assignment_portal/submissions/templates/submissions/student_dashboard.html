@@ -1,7 +1,12 @@
 {% include 'base.html' with page_title="Student Dashboard" %}
 
 <body>
-<div class="navbar">🎓 Student Dashboard</div>
+<div class="navbar">
+    🎓 Student Dashboard
+    <a href="{% url 'logout' %}" style="float:right; color:white; margin-right:20px; text-decoration:none;">
+        🔒 Logout
+    </a>
+</div>
 
 <div class="container">
 
