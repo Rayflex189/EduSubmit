@@ -1,26 +1,124 @@
 {% include 'base.html' with page_title="Register" %}
 
 <body>
+<style>
+    .navbar {
+        background: #1E3A8A;
+        padding: 15px;
+        color: #fff;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 0;
+    }
+
+    .card {
+        width: 100%;
+        max-width: 450px;
+        background: #fff;
+        padding: 28px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+        color: #1E3A8A;
+        font-size: 24px;
+        margin-bottom: 5px;
+    }
+
+    .card p {
+        color: #555;
+        margin-bottom: 20px;
+    }
+
+    form label {
+        display: block;
+        font-weight: 600;
+        margin-top: 15px;
+        margin-bottom: 5px;
+    }
+
+    form input {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 15px;
+        outline: none;
+    }
+
+    form input:focus {
+        border-color: #1E3A8A;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        background: #1E3A8A;
+        color: white;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background: #163a72;
+    }
+
+    .login-link {
+        margin-top: 15px;
+        text-align: center;
+        font-size: 14px;
+    }
+
+    .login-link a {
+        color: #1E3A8A;
+        font-weight: 600;
+        text-decoration: none;
+    }
+</style>
+
 <div class="navbar">🎓 Student Registration Portal</div>
 
 <div class="container">
     <div class="card">
-        <h2 style="color:#1E3A8A">Create Your Account</h2>
-        <p>Register using your matric number and a secure password.</p>
+        <h2>Create Your Account</h2>
+        <p>Fill in your student details to create an account.</p>
 
         <form method="POST">
             {% csrf_token %}
-            <label>Full Name</label>
-            <input type="text" name="name" placeholder="e.g John Daniel" required>
 
-            <label>Matric Number</label>
-            <input type="text" name="matric" placeholder="UAT23/03/04/3001" required>
+            <label for="id_full_name">Full Name</label>
+            {{ form.full_name }}
 
-            <label>Password</label>
-            <input type="password" name="password" placeholder="**********" required>
+            <label for="id_matric_number">Matric Number</label>
+            {{ form.matric_number }}
+
+            <label for="id_email">Email Address</label>
+            {{ form.email }}
+
+            <label for="id_password1">Password</label>
+            {{ form.password1 }}
+
+            <label for="id_password2">Confirm Password</label>
+            {{ form.password2 }}
 
             <button class="btn">Create Account</button>
         </form>
+
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+        </div>
     </div>
 </div>
+
 </body>
