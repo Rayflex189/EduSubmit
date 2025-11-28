@@ -11,11 +11,29 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config(
+    cloud_name="dlzn0moho",
+    api_key="563396395915366",
+    api_secret="pCSSrLNvxfFSEzY4ZnaOiF5u93o"
+)
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dlzn0moho',
+    'API_KEY': '563396395915366',
+    'API_SECRET': 'pCSSrLNvxfFSEzY4ZnaOiF5u93o',
+}
 
 
-from pathlib import Path
+MEDIA_URL = '/media/'  # or any prefix you choose
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
