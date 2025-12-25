@@ -1,8 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .forms import StudentRegisterForm, AssignmentForm
 from .models import Assignment, Student
+from django.contrib import messages
 
 def register(request):
     form = StudentRegisterForm()
@@ -91,7 +92,7 @@ def grade_assignment(request, assignment_id):
             messages.error(request, 'Please enter a grade.')
     
     return render(request, 'submissions/grade_assignment.html', {'assignment': assignment})
-    
+
 @login_required
 def logout_view(request):
     logout(request)
