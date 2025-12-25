@@ -58,8 +58,14 @@ def upload_assignment(request):
     else:
         form = AssignmentForm()
     
-    return render(request, 'submissions/upload_assignment.html', {'form': form})
-
+    # Pass student object to template
+    context = {
+        'form': form,
+        'student': request.user  # Add this line
+    }
+    
+    return render(request, 'submissions/upload_assignment.html', context)
+    
 @login_required
 def admin_dashboard(request):
     # Check if user is staff (lecturer/admin)
