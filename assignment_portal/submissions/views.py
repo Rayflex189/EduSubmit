@@ -38,8 +38,11 @@ def upload_assignment(request):
             assignment.student = request.user
             assignment.save()
             return redirect('student_dashboard')
+        else:
+            # Add this to see what's wrong
+            print("Form errors:", form.errors)  # Check console output
     return render(request, 'submissions/upload_assignment.html', {'form': form})
-
+    
 @login_required
 def admin_dashboard(request):
     if not request.user.is_staff:
