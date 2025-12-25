@@ -1,25 +1,919 @@
-{% include 'base.html' with page_title="Login" %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Academic Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1E3A8A;
+            --primary-dark: #0F172A;
+            --primary-light: #3B82F6;
+            --secondary: #10B981;
+            --accent: #8B5CF6;
+            --light: #F8FAFC;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --radius-sm: 0.375rem;
+            --radius: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+        }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--gray-900);
+            line-height: 1.5;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 1.5rem 2rem;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23000000" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,208C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-size: cover;
+            opacity: 0.15;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            background: rgba(255, 255, 255, 0.15);
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            letter-spacing: 0.5px;
+        }
+
+        .register-link-top {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .register-link-top:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Main Content */
+        .main-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            width: 100%;
+            max-width: 440px;
+            animation: cardFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes cardFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .card-header {
+            background: linear-gradient(to right, var(--primary), var(--primary-light));
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .card-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            max-width: 28rem;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .card-body {
+            padding: 2.5rem;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-label i {
+            color: var(--primary);
+            font-size: 0.875rem;
+            width: 1rem;
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 2.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            font-family: 'Inter', sans-serif;
+            background: var(--gray-50);
+            transition: all 0.2s ease;
+            color: var(--gray-900);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .form-input:focus + .input-icon {
+            color: var(--primary);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: color 0.2s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--gray-600);
+        }
+
+        .form-help {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin-top: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .form-help i {
+            font-size: 0.625rem;
+        }
+
+        /* Remember Me & Forgot Password */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .remember-me input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 1rem;
+            height: 1rem;
+            cursor: pointer;
+        }
+
+        .remember-me label {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            font-size: 0.875rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+            color: var(--primary-dark);
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(to right, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(30, 58, 138, 0.3);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Error Messages */
+        .error-messages {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .error-messages.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-title {
+            color: #DC2626;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .error-list {
+            list-style: none;
+            font-size: 0.8125rem;
+            color: #991B1B;
+            padding-left: 1.25rem;
+        }
+
+        .error-list li {
+            margin-bottom: 0.25rem;
+            position: relative;
+        }
+
+        .error-list li::before {
+            content: '•';
+            position: absolute;
+            left: -1rem;
+            color: #DC2626;
+        }
+
+        /* Django Form Errors */
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+            font-size: 0.75rem;
+            color: #DC2626;
+        }
+
+        .errorlist li {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .errorlist li:before {
+            content: '⚠️';
+            font-size: 0.625rem;
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            display: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .submit-btn.loading .loading-spinner {
+            display: block;
+        }
+
+        .submit-btn.loading span {
+            display: none;
+        }
+
+        /* Demo Credentials */
+        .demo-credentials {
+            background: #F0F9FF;
+            border: 1px solid #BAE6FD;
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            font-size: 0.8125rem;
+            color: #0369A1;
+        }
+
+        .demo-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .demo-list {
+            list-style: none;
+            padding-left: 1.5rem;
+        }
+
+        .demo-list li {
+            margin-bottom: 0.25rem;
+            position: relative;
+        }
+
+        .demo-list li:before {
+            content: '→';
+            position: absolute;
+            left: -1rem;
+            color: #0EA5E9;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 2rem 0;
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gray-200);
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        /* Register Link Bottom */
+        .register-link-bottom {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .register-link-bottom a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            transition: gap 0.2s ease;
+        }
+
+        .register-link-bottom a:hover {
+            text-decoration: underline;
+            gap: 0.5rem;
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--gray-900);
+            color: var(--gray-300);
+            padding: 2rem;
+            text-align: center;
+            font-size: 0.875rem;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .copyright {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .main-container {
+                padding: 1rem;
+            }
+
+            .card-body {
+                padding: 1.75rem;
+            }
+
+            .login-card {
+                max-width: 100%;
+            }
+
+            .card-header {
+                padding: 1.5rem;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
+
+            .form-options {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .card-body {
+                padding: 1.5rem;
+            }
+
+            .form-input {
+                padding: 0.75rem 1rem 0.75rem 2.5rem;
+            }
+
+            .input-icon {
+                left: 0.75rem;
+            }
+        }
+    </style>
+</head>
 <body>
-<div class="navbar">🔐 Login</div>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="logo-text">
+                    <div class="logo-title">Academic Portal</div>
+                    <div class="logo-subtitle">University Management System</div>
+                </div>
+            </a>
+            <a href="{% url 'register' %}" class="register-link-top">
+                <i class="fas fa-user-plus"></i>
+                Create Account
+            </a>
+        </div>
+    </header>
 
-<div class="container">
-    <div class="card">
-        <h2 style="color:#1E3A8A">Welcome Back</h2>
-        <p>Enter your matric number and password to continue.</p>
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="login-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i class="fas fa-sign-in-alt"></i>
+                </div>
+                <h1 class="card-title">Welcome Back</h1>
+                <p class="card-subtitle">Sign in to access your academic dashboard and assignments</p>
+            </div>
 
-        <form method="POST">
-            {% csrf_token %}
-            <label>Matric Number</label>
-            <input type="text" name="matric_number" placeholder="UAT23/.../.../....">
+            <div class="card-body">
+                <!-- Demo Credentials (Optional - Remove in production) -->
+                <div class="demo-credentials">
+                    <div class="demo-title">
+                        <i class="fas fa-flask"></i>
+                        Demo Credentials
+                    </div>
+                    <ul class="demo-list">
+                        <li><strong>Student:</strong> matric_number: U1234567 | password: demo123</li>
+                        <li><strong>Staff/Lecturer:</strong> matric_number: L001 | password: demo123</li>
+                    </ul>
+                </div>
 
-            <label>Password</label>
-            <input type="password" name="password">
+                <!-- Display error message if login fails -->
+                {% if request.method == 'POST' %}
+                <div class="error-messages show">
+                    <div class="error-title">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Invalid Credentials
+                    </div>
+                    <ul class="error-list">
+                        <li>Invalid matric number or password. Please try again.</li>
+                    </ul>
+                </div>
+                {% endif %}
 
-            <button class="btn">Login</button>
-        </form>
+                {% if messages %}
+                <div class="error-messages show" style="background: #D1FAE5; border-color: #A7F3D0;">
+                    <div class="error-title" style="color: #065F46;">
+                        <i class="fas fa-check-circle"></i>
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
-        <p>Not registered? <a href="/register/" style="color:#1E3A8A;">Create Account</a></p>
-    </div>
-</div>
+                <form method="POST" id="loginForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Matric Number Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="matric_number">
+                            <i class="fas fa-id-card"></i>
+                            Matric Number
+                        </label>
+                        <div class="input-container">
+                            <input type="text" 
+                                   name="matric_number" 
+                                   id="matric_number" 
+                                   class="form-input" 
+                                   placeholder="Enter your matric number"
+                                   value="{{ request.POST.matric_number|default:'' }}"
+                                   required
+                                   autofocus>
+                            <i class="fas fa-hashtag input-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label class="form-label" for="password">
+                            <i class="fas fa-lock"></i>
+                            Password
+                        </label>
+                        <div class="input-container">
+                            <input type="password" 
+                                   name="password" 
+                                   id="password" 
+                                   class="form-input" 
+                                   placeholder="Enter your password"
+                                   required>
+                            <i class="fas fa-key input-icon"></i>
+                            <button type="button" class="password-toggle" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="form-options">
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember" name="remember">
+                            <label for="remember">Remember me</label>
+                        </div>
+                        <a href="#" class="forgot-password">
+                            <i class="fas fa-question-circle"></i>
+                            Forgot password?
+                        </a>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span>Sign In</span>
+                        <div class="loading-spinner"></div>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+
+                <!-- Divider -->
+                <div class="divider">
+                    <span>New to Academic Portal?</span>
+                </div>
+
+                <!-- Register Link -->
+                <div class="register-link-bottom">
+                    <a href="{% url 'register' %}">
+                        <i class="fas fa-user-plus"></i>
+                        Create your student account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Help Center</a>
+                <a href="#">Contact Support</a>
+            </div>
+            <div class="copyright">
+                &copy; 2024 Academic Portal. All rights reserved. | University Management System v2.1
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Password visibility toggle
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordField = document.getElementById('password');
+        const submitBtn = document.getElementById('submitBtn');
+        const loginForm = document.getElementById('loginForm');
+        const matricField = document.getElementById('matric_number');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+
+        // Form submission
+        loginForm.addEventListener('submit', function(e) {
+            // Show loading state
+            submitBtn.classList.add('loading');
+            
+            // Auto-capitalize matric number before submission
+            matricField.value = matricField.value.toUpperCase();
+            
+            // Allow form to submit normally
+            // Django will handle validation on the server side
+        });
+
+        // Auto-capitalize matric number
+        matricField.addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase();
+        });
+
+        // Add CSS classes to form inputs for styling
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add classes to all form inputs
+            const inputs = document.querySelectorAll('input[type="text"], input[type="password"]');
+            inputs.forEach(input => {
+                input.classList.add('form-input');
+                
+                // Add focus/blur effects
+                input.addEventListener('focus', function() {
+                    this.parentElement.style.transform = 'translateY(-2px)';
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentElement.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // Set focus on matric field
+            matricField.focus();
+            
+            // Enter key to submit form
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !submitBtn.classList.contains('loading')) {
+                    loginForm.submit();
+                }
+            });
+            
+            // Auto-fill demo credentials (for testing)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('demo') === 'student') {
+                matricField.value = 'U1234567';
+                passwordField.value = 'demo123';
+            } else if (urlParams.get('demo') === 'staff') {
+                matricField.value = 'L001';
+                passwordField.value = 'demo123';
+            }
+        });
+
+        // Add visual feedback for incorrect credentials
+        {% if request.method == 'POST' %}
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorDiv = document.querySelector('.error-messages');
+            if (errorDiv) {
+                errorDiv.style.animation = 'none';
+                setTimeout(() => {
+                    errorDiv.style.animation = 'slideIn 0.3s ease';
+                }, 10);
+                
+                // Shake animation for invalid fields
+                const invalidFields = [matricField, passwordField];
+                invalidFields.forEach(field => {
+                    field.style.borderColor = '#DC2626';
+                    field.style.animation = 'shake 0.5s ease';
+                });
+            }
+        });
+        
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+        {% endif %}
+    </script>
 </body>
+</html>
