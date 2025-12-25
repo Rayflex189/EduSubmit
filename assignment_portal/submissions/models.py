@@ -36,13 +36,17 @@ class Student(AbstractBaseUser, PermissionsMixin):
         return self.matric_number
 
 
-# ---------- Assignment Model ----------
 class Assignment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='assignments')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     file = CloudinaryField('file', null=True, blank=True)
     date_uploaded = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending Review'),
+        ('graded', 'Graded'),
+        ('returned', 'Returned for Revision'),
+    ], default='pending')
     grade = models.CharField(max_length=5, blank=True, null=True)
     feedback = models.TextField(blank=True, null=True)
 

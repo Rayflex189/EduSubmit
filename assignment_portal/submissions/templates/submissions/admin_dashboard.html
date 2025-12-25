@@ -1,35 +1,307 @@
-{% include 'base.html' with page_title="Admin Dashboard" %}
+{% include 'base.html' with page_title="Lecturer Dashboard" %}
 
 <body>
-<div class="navbar">🧑‍🏫 Lecturer Dashboard</div>
+<div class="navbar" style="
+    background:#1E3A8A; 
+    padding:15px 25px; 
+    color:white; 
+    font-size:20px; 
+    font-weight:600;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+">
+    <span>🧑‍🏫 Lecturer Dashboard</span>
+    <a href="{% url 'logout' %}" 
+       style="color:white; text-decoration:none; font-size:16px; font-weight:500;">
+        🔒 Logout
+    </a>
+</div>
 
-<div class="container">
-    <h2 style="color:#1E3A8A">Assignments Submitted</h2>
+<div class="container" style="max-width:1200px; margin:40px auto;">
+    <h2 style="color:#1E3A8A; font-size:28px; font-weight:700; margin-bottom:25px;">
+        Assignments Submitted
+    </h2>
 
-    <div class="card">
-        <table class="table">
-            <tr>
-                <th>Student</th>
-                <th>Matric Number</th>
-                <th>Course</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
+    <!-- Statistics Cards -->
+    <div style="display:flex; gap:20px; margin-bottom:30px; flex-wrap:wrap;">
+        <div style="
+            background:#eef2ff; 
+            padding:20px; 
+            border-radius:10px; 
+            flex:1;
+            min-width:180px;
+            text-align:center;">
+            <p style="margin:0; font-size:14px; color:#1E3A8A;">Total Assignments</p>
+            <h2 style="margin:5px 0; color:#1E3A8A;">{{ assignments.count }}</h2>
+        </div>
+        
+        <div style="
+            background:#dcfce7; 
+            padding:20px; 
+            border-radius:10px; 
+            flex:1;
+            min-width:180px;
+            text-align:center;">
+            <p style="margin:0; font-size:14px; color:#15803d;">Graded</p>
+            <h2 style="margin:5px 0; color:#15803d;">
+                {{ assignments|dictsortreversed:"grade"|dictsort:"grade"|length }}
+            </h2>
+        </div>
+        
+        <div style="
+            background:#fef3c7; 
+            padding:20px; 
+            border-radius:10px; 
+            flex:1;
+            min-width:180px;
+            text-align:center;">
+            <p style="margin:0; font-size:14px; color:#d97706;">Pending</p>
+            <h2 style="margin:5px 0; color:#d97706;">
+                {{ assignments|length|add:"0" }}
+            </h2>
+        </div>
+    </div>
 
-            {% for a in assignments %}
-            <tr>
-                <td>{{ a.student.name }}</td>
-                <td>{{ a.student.matric }}</td>
-                <td>{{ a.course }}</td>
-                <td>{{ a.date_submitted }}</td>
-                <td>{{ a.status }}</td>
-                <td>
-                    <a href="/grade/{{ a.id }}/"><button class="btn">Grade</button></a>
-                </td>
-            </tr>
-            {% endfor %}
+    <div class="card" style="
+        background:white;
+        border-radius:12px;
+        padding:20px;
+        box-shadow:0 4px 15px rgba(0,0,0,0.08);
+        overflow-x:auto;
+    ">
+        {% if assignments %}
+        <table class="table" style="
+            width:100%; 
+            border-collapse:collapse; 
+            margin-top:10px;">
+            <thead>
+                <tr style="background:#1E3A8A; color:white; text-align:left;">
+                    <th style="padding:12px 15px;">Student</th>
+                    <th style="padding:12px 15px;">Matric Number</th>
+                    <th style="padding:12px 15px;">Assignment Title</th>
+                    <th style="padding:12px 15px;">Date Submitted</th>
+                    <th style="padding:12px 15px;">Status</th>
+                    <th style="padding:12px 15px;">Grade</th>
+                    <th style="padding:12px 15px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assignment in assignments %}
+                <tr style="
+                    background:#ffffff;
+                    border-bottom:1px solid #e5e7eb;
+                    transition:0.2s;
+                " onmouseover="this.style.background='#f3f4f6';" 
+                   onmouseout="this.style.background='white';">
+                    <td style="padding:12px 15px; font-weight:500;">
+                        {{ assignment.student.full_name }}
+                    </td>
+                    <td style="padding:12px 15px; font-family:monospace;">
+                        {{ assignment.student.matric_number }}
+                    </td>
+                    <td style="padding:12px 15px;">
+                        <strong>{{ assignment.title }}</strong>
+                        {% if assignment.description %}
+                        <br><small style="color:#6b7280; font-size:12px;">
+                            {{ assignment.description|truncatechars:50 }}
+                        </small>
+                        {% endif %}
+                    </td>
+                    <td style="padding:12px 15px; color:#6b7280;">
+                        {{ assignment.date_uploaded|date:"M d, Y" }}<br>
+                        <small>{{ assignment.date_uploaded|time:"H:i" }}</small>
+                    </td>
+                    <td style="padding:12px 15px;">
+                        {% if assignment.grade %}
+                        <span style="
+                            background:#10b981;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:15px;
+                            font-size:13px;
+                            font-weight:500;
+                        ">
+                            Graded
+                        </span>
+                        {% else %}
+                        <span style="
+                            background:#f59e0b;
+                            color:white;
+                            padding:6px 12px;
+                            border-radius:15px;
+                            font-size:13px;
+                            font-weight:500;
+                        ">
+                            Pending Review
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:12px 15px; font-weight:600; font-size:16px;">
+                        {% if assignment.grade %}
+                        <span style="color:#1E3A8A;">{{ assignment.grade }}</span>
+                        {% else %}
+                        <span style="color:#9ca3af;">--</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding:12px 15px;">
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <!-- Grade Assignment Button -->
+                            <a href="{% url 'grade_assignment' assignment.id %}">
+                                <button style="
+                                    background:#1E3A8A;
+                                    color:white;
+                                    border:none;
+                                    padding:8px 15px;
+                                    border-radius:6px;
+                                    font-size:14px;
+                                    cursor:pointer;
+                                    transition:0.3s;
+                                " onmouseover="this.style.background='#2563eb';"
+                                   onmouseout="this.style.background='#1E3A8A';">
+                                    {% if assignment.grade %}Update{% else %}Grade{% endif %}
+                                </button>
+                            </a>
+                            
+                            <!-- View File Button -->
+                            {% if assignment.file %}
+                            <a href="{{ assignment.file.url }}" target="_blank">
+                                <button style="
+                                    background:#4f46e5;
+                                    color:white;
+                                    border:none;
+                                    padding:8px 15px;
+                                    border-radius:6px;
+                                    font-size:14px;
+                                    cursor:pointer;
+                                    transition:0.3s;
+                                " onmouseover="this.style.background='#4338ca';"
+                                   onmouseout="this.style.background='#4f46e5';">
+                                    View File
+                                </button>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
+        {% else %}
+        <div style="text-align:center; padding:50px; color:#6b7280;">
+            <p style="font-size:20px; margin-bottom:10px;">📭 No assignments submitted yet</p>
+            <p>Assignments will appear here once students submit their work.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Actions -->
+    <div style="margin-top:30px; padding:20px; background:#f8fafc; border-radius:10px;">
+        <h3 style="color:#1E3A8A; margin-bottom:15px;">Quick Actions</h3>
+        <div style="display:flex; gap:15px; flex-wrap:wrap;">
+            <button onclick="downloadAllGrades()" style="
+                background:#10b981;
+                color:white;
+                border:none;
+                padding:10px 20px;
+                border-radius:6px;
+                cursor:pointer;
+                font-size:14px;
+            ">
+                📊 Download Grades Report
+            </button>
+            <button onclick="filterPending()" style="
+                background:#f59e0b;
+                color:white;
+                border:none;
+                padding:10px 20px;
+                border-radius:6px;
+                cursor:pointer;
+                font-size:14px;
+            ">
+                ⏳ Show Pending Only
+            </button>
+            <button onclick="filterGraded()" style="
+                background:#1E3A8A;
+                color:white;
+                border:none;
+                padding:10px 20px;
+                border-radius:6px;
+                cursor:pointer;
+                font-size:14px;
+            ">
+                ✅ Show Graded Only
+            </button>
+        </div>
     </div>
 </div>
+
+<script>
+// Simple filtering functions
+function filterPending() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(5)');
+        if (statusCell && statusCell.textContent.includes('Pending')) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterGraded() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const statusCell = row.querySelector('td:nth-child(5)');
+        if (statusCell && statusCell.textContent.includes('Graded')) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function showAll() {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        row.style.display = '';
+    });
+}
+
+function downloadAllGrades() {
+    alert('This would generate and download a CSV report of all grades.');
+    // In a real implementation, this would call a Django view to generate CSV
+}
+
+// Add event listener for Enter key to filter
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', filterTable);
+    }
+});
+</script>
+
+<style>
+@media (max-width: 768px) {
+    .container {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    
+    table {
+        font-size: 14px;
+    }
+    
+    th, td {
+        padding: 8px 10px !important;
+    }
+    
+    button {
+        padding: 6px 10px !important;
+        font-size: 13px !important;
+    }
+}
+</style>
 </body>

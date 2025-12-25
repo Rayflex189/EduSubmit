@@ -13,7 +13,6 @@
     align-items:center;
 ">
     <span>🎓 Student Dashboard</span>
-
     <a href="{% url 'logout' %}" 
        style="color:white; text-decoration:none; font-size:16px; font-weight:500;">
         🔒 Logout
@@ -23,8 +22,10 @@
 <div class="container" style="max-width:850px; margin:40px auto;">
 
     <h2 style="color:#1E3A8A; font-size:28px; font-weight:700; margin-bottom:15px;">
-        Welcome, {{ student.name }}
+        Welcome, {{ student.full_name }}
     </h2>
+    
+    <p style="color:#6b7280; margin-bottom:20px;">Matric: {{ student.matric_number }}</p>
 
     <div class="card" style="
         background:white;
@@ -83,37 +84,78 @@
                 cursor:pointer;
                 margin-top:10px;
                 transition:0.3s;">
-                Upload New Assignment
+                📤 Upload New Assignment
             </button>
         </a>
 
         <h3 style="margin-top:30px; color:#1E3A8A; font-size:20px;">Your Submissions</h3>
 
+        {% if assignments %}
         <table class="table" style="
             width:100%; 
             border-collapse:collapse; 
             margin-top:15px;">
             
             <tr style="background:#1E3A8A; color:white; text-align:left;">
-                <th style="padding:12px;">Course</th>
+                <th style="padding:12px;">Title</th>
                 <th style="padding:12px;">Date Submitted</th>
                 <th style="padding:12px;">Status</th>
                 <th style="padding:12px;">Grade</th>
+                <th style="padding:12px;">Feedback</th>
             </tr>
 
-            {% for a in assignments %}
+            {% for assignment in assignments %}
             <tr style="
                 background:#ffffff;
                 border-bottom:1px solid #e5e7eb;
                 transition:0.2s;
             " onmouseover="this.style.background='#f3f4f6';" onmouseout="this.style.background='white';">
-                <td style="padding:12px;">{{ a.course }}</td>
-                <td style="padding:12px;">{{ a.date_submitted }}</td>
-                <td style="padding:12px; font-weight:500;">{{ a.status }}</td>
-                <td style="padding:12px; font-weight:600; color:#1E3A8A;">{{ a.grade }}</td>
+                <td style="padding:12px; font-weight:500;">{{ assignment.title }}</td>
+                <td style="padding:12px; color:#6b7280;">{{ assignment.date_uploaded|date:"M d, Y H:i" }}</td>
+                <td style="padding:12px; font-weight:500;">
+                    {% if assignment.grade %}
+                    <span style="
+                        background:#10b981;
+                        color:white;
+                        padding:4px 10px;
+                        border-radius:15px;
+                        font-size:13px;
+                    ">
+                        Graded
+                    </span>
+                    {% else %}
+                    <span style="
+                        background:#f59e0b;
+                        color:white;
+                        padding:4px 10px;
+                        border-radius:15px;
+                        font-size:13px;
+                    ">
+                        Pending
+                    </span>
+                    {% endif %}
+                </td>
+                <td style="padding:12px; font-weight:600; color:#1E3A8A;">
+                    {% if assignment.grade %}{{ assignment.grade }}{% else %}--{% endif %}
+                </td>
+                <td style="padding:12px; font-size:14px; color:#6b7280; max-width:200px;">
+                    {% if assignment.feedback %}
+                    <span title="{{ assignment.feedback }}" style="cursor:help;">
+                        {{ assignment.feedback|truncatechars:30 }}
+                    </span>
+                    {% else %}
+                    --
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </table>
+        {% else %}
+        <div style="text-align:center; padding:40px; color:#6b7280;">
+            <p style="font-size:18px;">No assignments submitted yet.</p>
+            <p>Click "Upload New Assignment" to get started!</p>
+        </div>
+        {% endif %}
 
     </div>
 

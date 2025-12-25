@@ -1,28 +1,349 @@
 {% include 'base.html' with page_title="Grade Assignment" %}
 
 <body>
-<div class="navbar">📝 Grade Assignment</div>
+<div class="navbar" style="
+    background:#1E3A8A; 
+    padding:15px 25px; 
+    color:white; 
+    font-size:20px; 
+    font-weight:600;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+">
+    <span>📝 Grade Assignment</span>
+    <a href="{% url 'admin_dashboard' %}" 
+       style="color:white; text-decoration:none; font-size:16px; font-weight:500;">
+        ← Back to Dashboard
+    </a>
+</div>
 
-<div class="container">
-    <div class="card">
-        <h2 style="color:#1E3A8A">Grade Submission</h2>
+<div class="container" style="max-width:800px; margin:40px auto;">
+    <div class="card" style="
+        background:white;
+        border-radius:12px;
+        padding:30px;
+        box-shadow:0 4px 15px rgba(0,0,0,0.08);
+    ">
+        <h2 style="color:#1E3A8A; font-size:28px; font-weight:700; margin-bottom:25px;">
+            Grade Submission
+        </h2>
 
-        <p><strong>Student:</strong> {{ assignment.student.name }}</p>
-        <p><strong>Matric:</strong> {{ assignment.student.matric }}</p>
-        <p><strong>Course:</strong> {{ assignment.course }}</p>
+        <!-- Student Information -->
+        <div style="
+            background:#f8fafc;
+            padding:20px;
+            border-radius:8px;
+            margin-bottom:25px;
+        ">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div>
+                    <p style="margin:0 0 5px 0; font-size:14px; color:#6b7280;">Student Name</p>
+                    <p style="margin:0; font-size:18px; font-weight:600; color:#1E3A8A;">
+                        {{ assignment.student.full_name }}
+                    </p>
+                </div>
+                <div>
+                    <p style="margin:0 0 5px 0; font-size:14px; color:#6b7280;">Matric Number</p>
+                    <p style="margin:0; font-size:18px; font-weight:600; font-family:monospace; color:#1E3A8A;">
+                        {{ assignment.student.matric_number }}
+                    </p>
+                </div>
+            </div>
+            
+            <div style="margin-bottom:15px;">
+                <p style="margin:0 0 5px 0; font-size:14px; color:#6b7280;">Assignment Title</p>
+                <p style="margin:0; font-size:18px; font-weight:600; color:#1E3A8A;">
+                    {{ assignment.title }}
+                </p>
+                {% if assignment.description %}
+                <p style="margin:10px 0 0 0; color:#6b7280; font-size:15px;">
+                    {{ assignment.description }}
+                </p>
+                {% endif %}
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                <div>
+                    <p style="margin:0 0 5px 0; font-size:14px; color:#6b7280;">Submitted On</p>
+                    <p style="margin:0; font-size:15px; color:#1E3A8A;">
+                        {{ assignment.date_uploaded|date:"F d, Y" }}
+                    </p>
+                </div>
+                <div>
+                    <p style="margin:0 0 5px 0; font-size:14px; color:#6b7280;">Current Grade</p>
+                    <p style="margin:0; font-size:15px; color:#1E3A8A; font-weight:600;">
+                        {% if assignment.grade %}{{ assignment.grade }}{% else %}Not graded yet{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
 
-        <a href="{{ assignment.file.url }}"><button class="btn">Download Assignment</button></a>
+        <!-- File Download -->
+        {% if assignment.file %}
+        <div style="text-align:center; margin:25px 0;">
+            <a href="{{ assignment.file.url }}" target="_blank">
+                <button style="
+                    background:#4f46e5;
+                    color:white;
+                    border:none;
+                    padding:12px 25px;
+                    border-radius:8px;
+                    font-size:16px;
+                    cursor:pointer;
+                    transition:0.3s;
+                    display:inline-flex;
+                    align-items:center;
+                    gap:8px;
+                " onmouseover="this.style.background='#4338ca';"
+                   onmouseout="this.style.background='#4f46e5';">
+                    📄 Download Assignment File
+                </button>
+            </a>
+            <p style="margin:10px 0 0 0; color:#6b7280; font-size:14px;">
+                File will open in a new tab
+            </p>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:20px; background:#fef3c7; border-radius:8px; margin:25px 0;">
+            <p style="margin:0; color:#92400e;">⚠️ No file uploaded for this assignment</p>
+        </div>
+        {% endif %}
 
+        <!-- Current Feedback (if exists) -->
+        {% if assignment.feedback %}
+        <div style="
+            background:#f0f9ff;
+            padding:20px;
+            border-radius:8px;
+            margin-bottom:25px;
+            border-left:4px solid #0ea5e9;
+        ">
+            <h3 style="color:#0369a1; font-size:18px; margin:0 0 10px 0;">Previous Feedback</h3>
+            <p style="margin:0; color:#0c4a6e; font-style:italic;">
+                "{{ assignment.feedback }}"
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Grading Form -->
         <form method="POST">
             {% csrf_token %}
-            <label>Grade</label>
-            <input type="number" max="100" name="grade">
+            
+            <!-- Display messages if any -->
+            {% if messages %}
+            <div style="margin-bottom:20px;">
+                {% for message in messages %}
+                <div style="
+                    padding:12px;
+                    border-radius:6px;
+                    margin-bottom:10px;
+                    {% if message.tags == 'error' %}
+                    background:#fee2e2;
+                    color:#dc2626;
+                    border:1px solid #fca5a5;
+                    {% else %}
+                    background:#d1fae5;
+                    color:#059669;
+                    border:1px solid #a7f3d0;
+                    {% endif %}
+                ">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div style="display:grid; grid-template-columns:1fr 2fr; gap:20px; margin-bottom:20px;">
+                <div>
+                    <label style="
+                        display:block;
+                        margin-bottom:8px;
+                        font-weight:600;
+                        color:#374151;
+                    " for="grade">
+                        Grade
+                    </label>
+                    <input type="text" 
+                           name="grade" 
+                           id="grade"
+                           value="{% if assignment.grade %}{{ assignment.grade }}{% endif %}"
+                           placeholder="e.g., A, B+, 85, Pass"
+                           maxlength="5"
+                           style="
+                               width:100%;
+                               padding:12px;
+                               border:2px solid #e5e7eb;
+                               border-radius:8px;
+                               font-size:16px;
+                               transition:0.3s;
+                           "
+                           onfocus="this.style.borderColor='#4f46e5'; this.style.outline='none';"
+                           onblur="this.style.borderColor='#e5e7eb';"
+                           required>
+                    <p style="margin:8px 0 0 0; color:#6b7280; font-size:14px;">
+                        Enter grade (e.g., A, B+, 85/100, Pass)
+                    </p>
+                </div>
+                
+                <div>
+                    <label style="
+                        display:block;
+                        margin-bottom:8px;
+                        font-weight:600;
+                        color:#374151;
+                    " for="status">
+                        Status
+                    </label>
+                    <div style="
+                        padding:12px;
+                        background:#f8fafc;
+                        border-radius:8px;
+                        font-weight:600;
+                        color:{% if assignment.grade %}#059669{% else %}#d97706{% endif %};
+                    ">
+                        {% if assignment.grade %}✅ Graded{% else %}⏳ Pending Review{% endif %}
+                    </div>
+                </div>
+            </div>
 
-            <label>Feedback / Comments</label>
-            <textarea name="feedback" placeholder="Write your feedback..."></textarea>
+            <div style="margin-bottom:25px;">
+                <label style="
+                    display:block;
+                    margin-bottom:8px;
+                    font-weight:600;
+                    color:#374151;
+                " for="feedback">
+                    Feedback / Comments
+                </label>
+                <textarea name="feedback" 
+                          id="feedback"
+                          placeholder="Provide detailed feedback to the student..."
+                          rows="6"
+                          style="
+                              width:100%;
+                              padding:12px;
+                              border:2px solid #e5e7eb;
+                              border-radius:8px;
+                              font-size:16px;
+                              font-family:inherit;
+                              transition:0.3s;
+                              resize:vertical;
+                          "
+                          onfocus="this.style.borderColor='#4f46e5'; this.style.outline='none';"
+                          onblur="this.style.borderColor='#e5e7eb';">{% if assignment.feedback %}{{ assignment.feedback }}{% endif %}</textarea>
+                <p style="margin:8px 0 0 0; color:#6b7280; font-size:14px;">
+                    Your feedback will be visible to the student
+                </p>
+            </div>
 
-            <button class="btn">Submit Grade</button>
+            <div style="display:flex; gap:15px; margin-top:30px;">
+                <button type="submit" style="
+                    background:#10b981;
+                    color:white;
+                    border:none;
+                    padding:14px 30px;
+                    border-radius:8px;
+                    font-size:16px;
+                    font-weight:600;
+                    cursor:pointer;
+                    transition:0.3s;
+                    flex:1;
+                " onmouseover="this.style.background='#059669';"
+                   onmouseout="this.style.background='#10b981';">
+                    ✅ Submit Grade
+                </button>
+                
+                <a href="{% url 'admin_dashboard' %}" style="flex:1; text-decoration:none;">
+                    <button type="button" style="
+                        background:#6b7280;
+                        color:white;
+                        border:none;
+                        padding:14px 30px;
+                        border-radius:8px;
+                        font-size:16px;
+                        font-weight:600;
+                        cursor:pointer;
+                        transition:0.3s;
+                        width:100%;
+                    " onmouseover="this.style.background='#4b5563';"
+                       onmouseout="this.style.background='#6b7280';">
+                        Cancel
+                    </button>
+                </a>
+            </div>
         </form>
     </div>
 </div>
+
+<script>
+// Auto-focus on grade field
+document.addEventListener('DOMContentLoaded', function() {
+    const gradeInput = document.getElementById('grade');
+    if (gradeInput) {
+        gradeInput.focus();
+    }
+    
+    // Character counter for feedback
+    const feedbackTextarea = document.getElementById('feedback');
+    if (feedbackTextarea) {
+        const charCounter = document.createElement('div');
+        charCounter.style.marginTop = '5px';
+        charCounter.style.color = '#6b7280';
+        charCounter.style.fontSize = '14px';
+        charCounter.textContent = `Characters: ${feedbackTextarea.value.length}`;
+        feedbackTextarea.parentNode.appendChild(charCounter);
+        
+        feedbackTextarea.addEventListener('input', function() {
+            charCounter.textContent = `Characters: ${this.value.length}`;
+            if (this.value.length > 500) {
+                charCounter.style.color = '#dc2626';
+            } else if (this.value.length > 300) {
+                charCounter.style.color = '#f59e0b';
+            } else {
+                charCounter.style.color = '#6b7280';
+            }
+        });
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + Enter to submit
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        document.querySelector('form').submit();
+    }
+    // Escape to go back
+    if (e.key === 'Escape') {
+        window.location.href = "{% url 'admin_dashboard' %}";
+    }
+});
+</script>
+
+<style>
+@media (max-width: 768px) {
+    .container {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    
+    .card {
+        padding: 20px !important;
+    }
+    
+    div[style*="grid-template-columns:1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    
+    div[style*="grid-template-columns:1fr 2fr"] {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+    }
+    
+    div[style*="display:flex; gap:15px"] {
+        flex-direction: column;
+    }
+}
+</style>
 </body>
