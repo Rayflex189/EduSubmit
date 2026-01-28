@@ -265,28 +265,58 @@ def lecturer_assignments(request):
 @user_passes_test(is_lecturer)
 def grade_assignment(request, assignment_id):
     lecturer = request.user.lecturer_profile
+    
+    # Get the assignment, ensuring it belongs to lecturer's courses
     assignment = get_object_or_404(
-        Assignment, 
+        Assignment,
         id=assignment_id,
         course__lecturer=lecturer
     )
     
-    if request.method == 'POST':
-        form = GradeAssignmentForm(request.POST, instance=assignment)
-        if form.is_valid():
-            assignment = form.save(commit=False)
-            assignment.graded_by = lecturer
-            assignment.save()
-            messages.success(request, 'Assignment graded successfully!')
-            return redirect('lecturer_assignments')
-    else:
-        form = GradeAssignmentForm(instance=assignment)
+    # Get status choices for template
+    assignment_status_choices = Assignment._meta.get_field('status').choices
     
-    return render(request, 'submissions/grade_assignment.html', {
-        'form': form,
+    if request.method == 'POST':
+        grade = request.POST.get('grade', '').strip()
+        score = request.POST.get('score', '').strip()
+        feedback = request.POST.get('feedback', '').strip()
+        status = request.POST.get('status', 'graded')
+        
+        if grade:
+            # Update assignment
+            assignment.grade = grade.upper()
+            assignment.feedback = feedback
+            assignment.status = status
+            assignment.graded_by = lecturer
+            assignment.graded_date = timezone.now()
+            
+            # Parse score if provided
+            if score:
+                try:
+                    assignment.score = float(score)
+                except ValueError:
+                    assignment.score = None
+            
+            assignment.save()
+            
+            # Create notification for student
+            messages.success(
+                request, 
+                f'Grade submitted successfully for {assignment.student.user.full_name}!'
+            )
+            
+            # Redirect back to assignments list
+            return redirect('lecturer_assignments')
+        else:
+            messages.error(request, 'Please enter a grade.')
+    
+    context = {
         'assignment': assignment,
-        'lecturer': lecturer
-    })
+        'assignment_status_choices': assignment_status_choices,
+        'lecturer': lecturer,
+    }
+    
+    return render(request, 'grade_assignment.html', context)
 
 
 @login_required
