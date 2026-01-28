@@ -1,103 +1,340 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from .forms import StudentRegisterForm, AssignmentForm
-from .models import Assignment, Student
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.views import LoginView
 from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .forms import (
+    UserRegistrationForm, StudentProfileForm, 
+    LecturerProfileForm, AssignmentForm, GradeAssignmentForm
+)
+from .models import (
+    UserProfile, StudentProfile, LecturerProfile, 
+    Assignment, Course, Faculty, Department
+)
+
+# ---------- Utility Functions ----------
+def is_student(user):
+    return hasattr(user, 'student_profile')
+
+def is_lecturer(user):
+    return hasattr(user, 'lecturer_profile')
+
+
+# ---------- Authentication Views ----------
+class CustomLoginView(LoginView):
+    template_name = 'submissions/login.html'
+    
+    def get_success_url(self):
+        user = self.request.user
+        if hasattr(user, 'student_profile'):
+            return '/student/dashboard/'
+        elif hasattr(user, 'lecturer_profile'):
+            return '/lecturer/dashboard/'
+        elif user.is_superuser:
+            return '/admin/'
+        return '/'
+
 
 def register(request):
-    form = StudentRegisterForm()
     if request.method == 'POST':
-        form = StudentRegisterForm(request.POST)
-        if form.is_valid():
-            form.save()
+        user_form = UserRegistrationForm(request.POST)
+        
+        if user_form.is_valid():
+            user = user_form.save()
+            user_type = user_form.cleaned_data.get('user_type')
+            
+            # Create appropriate profile based on user type
+            if user_type == 'student':
+                return redirect('complete_student_profile', user_id=user.id)
+            elif user_type == 'lecturer':
+                return redirect('complete_lecturer_profile', user_id=user.id)
+            
+            login(request, user)
             return redirect('login')
-    return render(request, 'submissions/register.html', {'form': form})
+    else:
+        user_form = UserRegistrationForm()
+    
+    return render(request, 'submissions/register.html', {'form': user_form})
 
-def login_view(request):
+
+def complete_student_profile(request, user_id):
+    user = get_object_or_404(UserProfile, id=user_id)
+    
     if request.method == 'POST':
-        matric_number = request.POST.get('matric_number')
-        password = request.POST.get('password')
-        user = authenticate(request, matric_number=matric_number, password=password)
-        if user:
+        profile_form = StudentProfileForm(request.POST)
+        if profile_form.is_valid():
+            student_profile = profile_form.save(commit=False)
+            student_profile.user = user
+            student_profile.save()
+            
+            # Authenticate and login
             login(request, user)
             return redirect('student_dashboard')
-    return render(request, 'submissions/login.html')
+    else:
+        profile_form = StudentProfileForm()
+    
+    return render(request, 'submissions/complete_student_profile.html', {
+        'form': profile_form,
+        'user': user
+    })
 
+
+def complete_lecturer_profile(request, user_id):
+    user = get_object_or_404(UserProfile, id=user_id)
+    
+    if request.method == 'POST':
+        profile_form = LecturerProfileForm(request.POST)
+        if profile_form.is_valid():
+            lecturer_profile = profile_form.save(commit=False)
+            lecturer_profile.user = user
+            lecturer_profile.save()
+            
+            # Make user staff and save
+            user.is_staff = True
+            user.save()
+            
+            # Authenticate and login
+            login(request, user)
+            return redirect('lecturer_dashboard')
+    else:
+        profile_form = LecturerProfileForm()
+    
+    return render(request, 'submissions/complete_lecturer_profile.html', {
+        'form': profile_form,
+        'user': user
+    })
+
+
+# ---------- Student Views ----------
 @login_required
+@user_passes_test(is_student)
 def student_dashboard(request):
-    # Get assignments for the current student
-    assignments = Assignment.objects.filter(student=request.user)
+    student = request.user.student_profile
+    assignments = Assignment.objects.filter(student=student).order_by('-date_uploaded')[:5]
+    courses = Course.objects.filter(department=student.department, level=student.level)
     
-    # Calculate statistics based on your model
-    total_assignments = assignments.count()
-    
-    # Since your model doesn't have 'status', we'll use grade presence as indicator
-    graded_count = assignments.exclude(grade__isnull=True).exclude(grade__exact='').count()
-    pending_count = total_assignments - graded_count
+    # Calculate statistics
+    total_assignments = Assignment.objects.filter(student=student).count()
+    pending_assignments = Assignment.objects.filter(student=student, status='pending').count()
+    graded_assignments = Assignment.objects.filter(student=student, status='graded').count()
     
     context = {
+        'student': student,
         'assignments': assignments,
-        'student': request.user,  # This is your Student model instance
-        'submitted': total_assignments,
-        'pending': pending_count,
-        'graded': graded_count,
+        'courses': courses,
+        'total_assignments': total_assignments,
+        'pending_assignments': pending_assignments,
+        'graded_assignments': graded_assignments,
     }
     
     return render(request, 'submissions/student_dashboard.html', context)
-    
+
+
 @login_required
+@user_passes_test(is_student)
 def upload_assignment(request):
+    student = request.user.student_profile
+    
     if request.method == 'POST':
         form = AssignmentForm(request.POST, request.FILES)
         if form.is_valid():
             assignment = form.save(commit=False)
-            assignment.student = request.user  # This will be your Student instance
+            assignment.student = student
             assignment.save()
+            messages.success(request, 'Assignment uploaded successfully!')
             return redirect('student_dashboard')
     else:
         form = AssignmentForm()
     
-    # Pass student object to template
-    context = {
+    # Get courses available for student's level and department
+    courses = Course.objects.filter(
+        department=student.department,
+        level=student.level
+    )
+    
+    return render(request, 'submissions/upload_assignment.html', {
         'form': form,
-        'student': request.user  # Add this line
-    }
-    
-    return render(request, 'submissions/upload_assignment.html', context)
-    
-@login_required
-def admin_dashboard(request):
-    # Check if user is staff (lecturer/admin)
-    if not request.user.is_staff:
-        return redirect('student_dashboard')
-    
-    # Get all assignments with student details
-    assignments = Assignment.objects.select_related('student').all()
-    
-    return render(request, 'submissions/admin_dashboard.html', {'assignments': assignments})
+        'student': student,
+        'courses': courses
+    })
+
 
 @login_required
-def grade_assignment(request, assignment_id):
-    if not request.user.is_staff:
-        return redirect('student_dashboard')
+@user_passes_test(is_student)
+def student_assignments(request):
+    student = request.user.student_profile
+    assignments = Assignment.objects.filter(student=student).order_by('-date_uploaded')
     
-    assignment = get_object_or_404(Assignment, id=assignment_id)
+    return render(request, 'submissions/student_assignments.html', {
+        'assignments': assignments,
+        'student': student
+    })
+
+
+@login_required
+@user_passes_test(is_student)
+def student_profile(request):
+    student = request.user.student_profile
     
     if request.method == 'POST':
-        grade = request.POST.get('grade')
-        feedback = request.POST.get('feedback')
-        
-        if grade:
-            assignment.grade = grade
-            assignment.feedback = feedback
-            assignment.save()
-            messages.success(request, f'Grade submitted successfully for {assignment.student.full_name}!')
-            return redirect('admin_dashboard')
-        else:
-            messages.error(request, 'Please enter a grade.')
+        # Handle profile updates here
+        pass
     
-    return render(request, 'submissions/grade_assignment.html', {'assignment': assignment})
+    return render(request, 'submissions/student_profile.html', {
+        'student': student
+    })
+
+
+# ---------- Lecturer Views ----------
+@login_required
+@user_passes_test(is_lecturer)
+def lecturer_dashboard(request):
+    lecturer = request.user.lecturer_profile
+    courses = Course.objects.filter(lecturer=lecturer)
+    total_assignments = Assignment.objects.filter(course__lecturer=lecturer).count()
+    pending_assignments = Assignment.objects.filter(
+        course__lecturer=lecturer, 
+        status__in=['pending', 'under_review']
+    ).count()
+    
+    # Get recent assignments
+    recent_assignments = Assignment.objects.filter(
+        course__lecturer=lecturer
+    ).select_related('student', 'course').order_by('-date_uploaded')[:10]
+    
+    context = {
+        'lecturer': lecturer,
+        'courses': courses,
+        'total_assignments': total_assignments,
+        'pending_assignments': pending_assignments,
+        'recent_assignments': recent_assignments,
+    }
+    
+    return render(request, 'submissions/lecturer_dashboard.html', context)
+
+
+@login_required
+@user_passes_test(is_lecturer)
+def lecturer_assignments(request):
+    lecturer = request.user.lecturer_profile
+    status_filter = request.GET.get('status', 'all')
+    
+    assignments = Assignment.objects.filter(course__lecturer=lecturer)
+    
+    if status_filter != 'all':
+        assignments = assignments.filter(status=status_filter)
+    
+    assignments = assignments.select_related('student', 'course').order_by('-date_uploaded')
+    
+    return render(request, 'submissions/lecturer_assignments.html', {
+        'assignments': assignments,
+        'lecturer': lecturer,
+        'status_filter': status_filter
+    })
+
+
+@login_required
+@user_passes_test(is_lecturer)
+def grade_assignment(request, assignment_id):
+    lecturer = request.user.lecturer_profile
+    assignment = get_object_or_404(
+        Assignment, 
+        id=assignment_id,
+        course__lecturer=lecturer
+    )
+    
+    if request.method == 'POST':
+        form = GradeAssignmentForm(request.POST, instance=assignment)
+        if form.is_valid():
+            assignment = form.save(commit=False)
+            assignment.graded_by = lecturer
+            assignment.save()
+            messages.success(request, 'Assignment graded successfully!')
+            return redirect('lecturer_assignments')
+    else:
+        form = GradeAssignmentForm(instance=assignment)
+    
+    return render(request, 'submissions/grade_assignment.html', {
+        'form': form,
+        'assignment': assignment,
+        'lecturer': lecturer
+    })
+
+
+@login_required
+@user_passes_test(is_lecturer)
+def lecturer_courses(request):
+    lecturer = request.user.lecturer_profile
+    courses = Course.objects.filter(lecturer=lecturer).select_related('department', 'level')
+    
+    return render(request, 'submissions/lecturer_courses.html', {
+        'courses': courses,
+        'lecturer': lecturer
+    })
+
+
+@login_required
+@user_passes_test(is_lecturer)
+def lecturer_students(request):
+    lecturer = request.user.lecturer_profile
+    # Get students from lecturer's courses
+    courses = Course.objects.filter(lecturer=lecturer)
+    students = StudentProfile.objects.filter(
+        department=lecturer.department
+    ).distinct()
+    
+    return render(request, 'submissions/lecturer_students.html', {
+        'students': students,
+        'lecturer': lecturer
+    })
+
+
+# ---------- API Views ----------
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+# Create separate API apps for students and lecturers
+# students/api/views.py
+class StudentViewSet(viewsets.ModelViewSet):
+    queryset = StudentProfile.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        if hasattr(self.request.user, 'student_profile'):
+            return self.queryset.filter(user=self.request.user)
+        elif hasattr(self.request.user, 'lecturer_profile'):
+            # Lecturers can see their department's students
+            return self.queryset.filter(department=self.request.user.lecturer_profile.department)
+        return self.queryset.none()
+    
+    @action(detail=True, methods=['get'])
+    def assignments(self, request, pk=None):
+        student = self.get_object()
+        assignments = Assignment.objects.filter(student=student)
+        # Return serialized assignments
+        return Response([])
+
+
+# lecturers/api/views.py
+class LecturerViewSet(viewsets.ModelViewSet):
+    queryset = LecturerProfile.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        if hasattr(self.request.user, 'lecturer_profile'):
+            return self.queryset.filter(user=self.request.user)
+        return self.queryset.none()
+    
+    @action(detail=True, methods=['get'])
+    def courses(self, request, pk=None):
+        lecturer = self.get_object()
+        courses = Course.objects.filter(lecturer=lecturer)
+        # Return serialized courses
+        return Response([])
+
 
 @login_required
 def logout_view(request):
