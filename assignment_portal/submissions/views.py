@@ -192,27 +192,53 @@ def student_profile(request):
 @user_passes_test(is_lecturer)
 def lecturer_dashboard(request):
     lecturer = request.user.lecturer_profile
-    courses = Course.objects.filter(lecturer=lecturer)
-    total_assignments = Assignment.objects.filter(course__lecturer=lecturer).count()
-    pending_assignments = Assignment.objects.filter(
-        course__lecturer=lecturer, 
-        status__in=['pending', 'under_review']
-    ).count()
     
-    # Get recent assignments
-    recent_assignments = Assignment.objects.filter(
+    # Get lecturer's courses
+    courses = Course.objects.filter(lecturer=lecturer).prefetch_related('students')
+    
+    # Get assignments for lecturer's courses
+    assignments = Assignment.objects.filter(
         course__lecturer=lecturer
-    ).select_related('student', 'course').order_by('-date_uploaded')[:10]
+    ).select_related('student__user', 'course', 'graded_by__user')
+    
+    # Calculate statistics
+    total_assignments = assignments.count()
+    graded_assignments = assignments.filter(status='graded').count()
+    pending_assignments = assignments.filter(status__in=['pending', 'under_review']).count()
+    total_courses = courses.count()
+    
+    # Get recent assignments (last 10)
+    recent_assignments = assignments.order_by('-date_uploaded')[:10]
+    
+    # Get assignments with upcoming deadlines (within next 7 days)
+    from datetime import datetime, timedelta
+    next_week = datetime.now() + timedelta(days=7)
+    upcoming_deadlines = assignments.filter(
+        deadline__isnull=False,
+        deadline__gte=datetime.now(),
+        deadline__lte=next_week
+    ).order_by('deadline')[:5]
+    
+    # Calculate course student counts
+    for course in courses:
+        course.student_count = StudentProfile.objects.filter(
+            department=course.department,
+            level=course.level
+        ).count()
     
     context = {
         'lecturer': lecturer,
         'courses': courses,
-        'total_assignments': total_assignments,
-        'pending_assignments': pending_assignments,
+        'assignments': assignments,
         'recent_assignments': recent_assignments,
+        'upcoming_deadlines': upcoming_deadlines,
+        'total_assignments': total_assignments,
+        'graded_assignments': graded_assignments,
+        'pending_assignments': pending_assignments,
+        'total_courses': total_courses,
     }
     
-    return render(request, 'submissions/lecturer_dashboard.html', context)
+    return render(request, 'lecturer_dashboard.html', context)
 
 
 @login_required
