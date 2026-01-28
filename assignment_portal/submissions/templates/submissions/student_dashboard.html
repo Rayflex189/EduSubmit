@@ -1,921 +1,666 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - Academic Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #1E3A8A;
-            --primary-dark: #0F172A;
-            --primary-light: #3B82F6;
-            --secondary: #10B981;
-            --accent: #8B5CF6;
-            --light: #F8FAFC;
-            --gray-50: #F9FAFB;
-            --gray-100: #F3F4F6;
-            --gray-200: #E5E7EB;
-            --gray-300: #D1D5DB;
-            --gray-700: #374151;
-            --gray-900: #111827;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            --radius-sm: 0.375rem;
-            --radius: 0.5rem;
-            --radius-lg: 0.75rem;
-            --radius-xl: 1rem;
-        }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-            min-height: 100vh;
-            color: var(--gray-900);
-            line-height: 1.5;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            padding: 1rem 2rem;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23000000" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,208C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
-            background-size: cover;
-            opacity: 0.15;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            background: rgba(255, 255, 255, 0.15);
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .logo-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: white;
-            letter-spacing: -0.5px;
-        }
-
-        .logo-subtitle {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.8);
-            letter-spacing: 0.5px;
-        }
-
-        /* User Info */
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            color: white;
-        }
-
-        .user-name {
-            font-weight: 600;
-            font-size: 0.9375rem;
-        }
-
-        .user-role {
-            font-size: 0.75rem;
-            opacity: 0.9;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 0.125rem 0.5rem;
-            border-radius: 1rem;
-            margin-top: 0.125rem;
-        }
-
-        .logout-btn {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            background: rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        /* Main Content */
-        .main-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* Welcome Section */
-        .welcome-section {
-            margin-bottom: 2rem;
-            animation: fadeIn 0.6s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .welcome-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .welcome-subtitle {
-            color: var(--gray-600);
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .matric-badge {
-            background: var(--primary-light);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-left: 0.5rem;
-        }
-
-        /* Stats Cards */
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
-        }
-
-        .stat-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            border: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            gap: 1.25rem;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .stat-icon {
-            width: 3.5rem;
-            height: 3.5rem;
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .stat-card:nth-child(1) .stat-icon {
-            background: #EEF2FF;
-            color: var(--primary);
-        }
-
-        .stat-card:nth-child(2) .stat-icon {
-            background: #F0F9FF;
-            color: #0284C7;
-        }
-
-        .stat-card:nth-child(3) .stat-icon {
-            background: #F0FDF4;
-            color: #16A34A;
-        }
-
-        .stat-details {
-            flex: 1;
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            margin-bottom: 0.25rem;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--gray-900);
-            line-height: 1;
-        }
-
-        /* Action Button */
-        .action-container {
-            margin-bottom: 2.5rem;
-            text-align: center;
-        }
-
-        .upload-btn {
-            background: linear-gradient(to right, var(--primary), var(--primary-light));
-            color: white;
-            border: none;
-            padding: 1rem 2.5rem;
-            border-radius: var(--radius-lg);
-            font-size: 1.125rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
-        }
-
-        .upload-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(30, 58, 138, 0.3);
-        }
-
-        .upload-btn:active {
-            transform: translateY(-1px);
-        }
-
-        /* Submissions Section */
-        .submissions-section {
-            background: white;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            overflow: hidden;
-        }
-
-        .section-header {
-            padding: 1.75rem 2rem;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .section-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .section-actions {
-            display: flex;
-            gap: 0.75rem;
-        }
-
-        .action-btn {
-            padding: 0.625rem 1.25rem;
-            border: 1px solid var(--gray-300);
-            background: white;
-            border-radius: var(--radius);
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--gray-700);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .action-btn:hover {
-            background: var(--gray-50);
-            border-color: var(--gray-400);
-        }
-
-        .action-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        /* Table */
-        .table-container {
-            overflow-x: auto;
-            padding: 0 2rem 2rem;
-        }
-
-        .assignments-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-
-        .assignments-table thead {
-            background: var(--gray-50);
-            border-bottom: 2px solid var(--gray-200);
-        }
-
-        .assignments-table th {
-            padding: 1rem 1.25rem;
-            text-align: left;
-            font-weight: 600;
-            font-size: 0.875rem;
-            color: var(--gray-700);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .assignments-table tbody tr {
-            border-bottom: 1px solid var(--gray-200);
-            transition: all 0.2s ease;
-        }
-
-        .assignments-table tbody tr:hover {
-            background: var(--gray-50);
-            transform: translateX(4px);
-        }
-
-        .assignments-table td {
-            padding: 1.25rem 1.25rem;
-            color: var(--gray-900);
-        }
-
-        .assignment-title {
-            font-weight: 600;
-            color: var(--gray-900);
-            margin-bottom: 0.25rem;
-        }
-
-        .assignment-description {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            max-width: 300px;
-        }
-
-        .assignment-date {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            white-space: nowrap;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.375rem 0.875rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .status-pending {
-            background: #FEF3C7;
-            color: #92400E;
-        }
-
-        .status-graded {
-            background: #D1FAE5;
-            color: #065F46;
-        }
-
-        .grade-display {
-            font-weight: 700;
-            font-size: 1.125rem;
-            color: var(--primary);
-        }
-
-        .grade-pending {
-            color: var(--gray-400);
-            font-style: italic;
-        }
-
-        .feedback-preview {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            max-width: 250px;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .feedback-preview:hover::after {
-            content: attr(data-full);
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: var(--gray-900);
-            color: white;
-            padding: 0.75rem;
-            border-radius: var(--radius);
-            font-size: 0.875rem;
-            z-index: 10;
-            white-space: pre-wrap;
-            max-width: 300px;
-            box-shadow: var(--shadow-lg);
-        }
-
-        /* Empty State */
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
-            color: var(--gray-500);
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .empty-title {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--gray-700);
-        }
-
-        .empty-description {
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--gray-900);
-            color: var(--gray-300);
-            padding: 1.5rem 2rem;
-            text-align: center;
-            font-size: 0.875rem;
-            margin-top: 3rem;
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: var(--gray-400);
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-
-        .copyright {
-            font-size: 0.75rem;
-            color: var(--gray-500);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .main-container {
-                padding: 1.5rem;
-            }
-            
-            .stats-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 1rem;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-            
-            .user-info {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .main-container {
-                padding: 1rem;
-            }
-            
-            .stats-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .section-header {
-                flex-direction: column;
-                align-items: stretch;
-                padding: 1.25rem;
-            }
-            
-            .section-actions {
-                justify-content: center;
-            }
-            
-            .table-container {
-                padding: 0 1rem 1rem;
-            }
-            
-            .assignments-table th,
-            .assignments-table td {
-                padding: 0.75rem;
-            }
-            
-            .welcome-title {
-                font-size: 1.75rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .user-details {
-                align-items: center;
-            }
-            
-            .stat-card {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
-            }
-            
-            .upload-btn {
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .action-btn {
-                flex: 1;
-                justify-content: center;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <a href="{% url 'student_dashboard' %}" class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
-                <div class="logo-text">
-                    <div class="logo-title">Academic Portal</div>
-                    <div class="logo-subtitle">Student Dashboard</div>
-                </div>
-            </a>
-            
-            <div class="user-info">
-                <div class="user-details">
-                    <div class="user-name">{{ student.full_name }}</div>
-                    <div class="user-role">Student</div>
-                </div>
-                <a href="{% url 'logout' %}" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Logout
-                </a>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-container">
-        <!-- Welcome Section -->
-        <div class="welcome-section">
-            <h1 class="welcome-title">Welcome back, {{ student.full_name }}</h1>
-            <div class="welcome-subtitle">
-                <i class="fas fa-id-card"></i>
-                Matric Number: 
-                <span class="matric-badge">{{ student.matric_number }}</span>
-            </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-container">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-file-upload"></i>
-                </div>
-                <div class="stat-details">
-                    <div class="stat-label">Total Submitted</div>
-                    <div class="stat-value">{{ submitted }}</div>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-details">
-                    <div class="stat-label">Pending Grading</div>
-                    <div class="stat-value">{{ pending }}</div>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-details">
-                    <div class="stat-label">Graded</div>
-                    <div class="stat-value">{{ graded }}</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Button -->
-        <div class="action-container">
-            <a href="{% url 'upload_assignment' %}">
-                <button class="upload-btn">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    Upload New Assignment
-                </button>
-            </a>
-        </div>
-
-        <!-- Submissions Section -->
-        <div class="submissions-section">
-            <div class="section-header">
-                <h2 class="section-title">
-                    <i class="fas fa-tasks"></i>
-                    Your Submissions
-                </h2>
-                <div class="section-actions">
-                    <button class="action-btn active" onclick="filterAssignments('all')">
-                        <i class="fas fa-layer-group"></i>
-                        All
-                    </button>
-                    <button class="action-btn" onclick="filterAssignments('pending')">
-                        <i class="fas fa-clock"></i>
-                        Pending
-                    </button>
-                    <button class="action-btn" onclick="filterAssignments('graded')">
-                        <i class="fas fa-check-circle"></i>
-                        Graded
-                    </button>
-                </div>
-            </div>
-
-            <div class="table-container">
-                {% if assignments %}
-                <table class="assignments-table">
-                    <thead>
-                        <tr>
-                            <th>Assignment Title</th>
-                            <th>Date Submitted</th>
-                            <th>Status</th>
-                            <th>Grade</th>
-                            <th>Feedback</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for assignment in assignments %}
-                        <tr class="assignment-row" data-status="{% if assignment.grade %}graded{% else %}pending{% endif %}">
-                            <td>
-                                <div class="assignment-title">{{ assignment.title }}</div>
-                                {% if assignment.description %}
-                                <div class="assignment-description">{{ assignment.description|truncatechars:80 }}</div>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="assignment-date">{{ assignment.date_uploaded|date:"M d, Y" }}</div>
-                                <div style="font-size: 0.75rem; color: var(--gray-500);">
-                                    {{ assignment.date_uploaded|time:"H:i" }}
-                                </div>
-                            </td>
-                            <td>
-                                {% if assignment.grade %}
-                                <span class="status-badge status-graded">
-                                    <i class="fas fa-check"></i>
-                                    Graded
-                                </span>
-                                {% else %}
-                                <span class="status-badge status-pending">
-                                    <i class="fas fa-clock"></i>
-                                    Pending
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if assignment.grade %}
-                                <div class="grade-display">{{ assignment.grade }}</div>
-                                {% else %}
-                                <div class="grade-pending">--</div>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if assignment.feedback %}
-                                <div class="feedback-preview" data-full="{{ assignment.feedback }}">
-                                    {{ assignment.feedback|truncatechars:60 }}
-                                </div>
-                                {% else %}
-                                <div style="color: var(--gray-400); font-style: italic;">--</div>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-file-import"></i>
+{% block title %}Student Dashboard - EduManage Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+    
+    .grade-badge {
+        font-size: 1.125rem;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        min-width: 70px;
+    }
+    
+    .grade-a { background-color: #10b981; color: white; }
+    .grade-b { background-color: #3b82f6; color: white; }
+    .grade-c { background-color: #f59e0b; color: white; }
+    .grade-d { background-color: #ef4444; color: white; }
+    .grade-f { background-color: #6b7280; color: white; }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+        stroke-dasharray: 283;
+        stroke-dashoffset: 283;
+        transition: stroke-dashoffset 0.5s ease;
+        stroke-linecap: round;
+    }
+    
+    .floating-action {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .course-chip {
+        background: linear-gradient(135deg, var(--color1, #667eea) 0%, var(--color2, #764ba2) 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Welcome, {{ student.user.full_name }}</h1>
+        <p class="mt-2 text-gray-600">
+            <i class="fas fa-user-graduate mr-2"></i>
+            {{ student.level.name }} • {{ student.department.name }}
+        </p>
+    </div>
+    
+    <div class="flex flex-wrap gap-3">
+        <a href="{% url 'upload_assignment' %}" 
+           class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white gradient-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 floating-action">
+            <i class="fas fa-plus-circle mr-2"></i>
+            New Assignment
+        </a>
+        <a href="{% url 'student_courses' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            <i class="fas fa-book mr-2"></i>
+            My Courses
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <!-- Student Information Banner -->
+    <div class="bg-gradient-to-r from-primary-500 to-primary-700 rounded-2xl p-6 text-white mb-8 shadow-lg">
+        <div class="flex flex-col md:flex-row md:items-center justify-between">
+            <div>
+                <div class="flex items-center mb-2">
+                    <div class="h-12 w-12 rounded-full bg-white bg-opacity-20 flex items-center justify-center mr-4">
+                        <i class="fas fa-id-card text-xl"></i>
                     </div>
-                    <h3 class="empty-title">No Assignments Yet</h3>
-                    <p class="empty-description">You haven't submitted any assignments yet. Get started by uploading your first assignment!</p>
-                    <a href="{% url 'upload_assignment' %}">
-                        <button class="upload-btn" style="font-size: 1rem; padding: 0.875rem 2rem;">
-                            <i class="fas fa-plus-circle"></i>
-                            Upload Your First Assignment
-                        </button>
+                    <div>
+                        <h2 class="text-xl font-bold">{{ student.matric_number }}</h2>
+                        <p class="text-primary-100">Matric Number</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div>
+                        <p class="text-sm text-primary-200">Faculty</p>
+                        <p class="font-semibold">{{ student.faculty.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-primary-200">Department</p>
+                        <p class="font-semibold">{{ student.department.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-primary-200">Level</p>
+                        <p class="font-semibold">{{ student.level.name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-primary-200">Admission Year</p>
+                        <p class="font-semibold">{{ student.admission_year }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 md:mt-0 text-center">
+                <div class="relative inline-block">
+                    <svg class="w-24 h-24" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8"/>
+                        <circle id="progressCircle" cx="50" cy="50" r="45" fill="none" stroke="white" stroke-width="8" 
+                                stroke-dasharray="283" stroke-dashoffset="0" class="progress-ring-circle" 
+                                style="stroke-dashoffset: {{ completion_percentage|default:0 }}"/>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-2xl font-bold">{{ completion_percentage|default:"0" }}%</span>
+                    </div>
+                </div>
+                <p class="text-sm mt-2 text-primary-200">Course Completion</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 card-hover">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-file-upload text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Assignments</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_assignments }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500 card-hover">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Pending Review</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ pending_assignments }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 card-hover">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Graded</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ graded_assignments }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 card-hover">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <i class="fas fa-book-open text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Current Courses</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_courses }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Recent Assignments -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-tasks mr-2 text-blue-500"></i>
+                            Recent Submissions
+                        </h2>
+                        <div class="flex space-x-2">
+                            <button onclick="filterAssignments('all')" 
+                                    class="px-3 py-1 text-sm font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors">
+                                All
+                            </button>
+                            <button onclick="filterAssignments('pending')" 
+                                    class="px-3 py-1 text-sm font-medium rounded-full bg-yellow-100 text-yellow-800 hover:bg-yellow-200 transition-colors">
+                                Pending
+                            </button>
+                            <button onclick="filterAssignments('graded')" 
+                                    class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition-colors">
+                                Graded
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="divide-y divide-gray-200">
+                    {% if recent_assignments %}
+                        {% for assignment in recent_assignments %}
+                        <div class="assignment-card p-6 hover:bg-gray-50 transition-colors assignment-row" 
+                             data-status="{{ assignment.status }}">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-3">
+                                        <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded mr-3">
+                                            {{ assignment.course.code }}
+                                        </span>
+                                        <span class="text-xs text-gray-500">
+                                            <i class="fas fa-calendar-alt mr-1"></i>
+                                            {{ assignment.date_uploaded|date:"M d, Y" }}
+                                        </span>
+                                    </div>
+                                    
+                                    <h3 class="font-semibold text-gray-900 mb-2">{{ assignment.title }}</h3>
+                                    
+                                    {% if assignment.description %}
+                                    <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                                        {{ assignment.description|truncatechars:120 }}
+                                    </p>
+                                    {% endif %}
+                                    
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-4">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                                {% if assignment.status == 'graded' %}bg-green-100 text-green-800
+                                                {% elif assignment.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                                {% elif assignment.status == 'under_review' %}bg-blue-100 text-blue-800
+                                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                                <i class="fas {% if assignment.status == 'graded' %}fa-check
+                                                    {% elif assignment.status == 'pending' %}fa-clock
+                                                    {% elif assignment.status == 'under_review' %}fa-eye
+                                                    {% else %}fa-redo{% endif %} mr-1"></i>
+                                                {{ assignment.get_status_display }}
+                                            </span>
+                                            
+                                            {% if assignment.grade %}
+                                            <span class="grade-badge grade-{{ assignment.grade|lower }}">
+                                                {{ assignment.grade }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-2">
+                                            {% if assignment.feedback %}
+                                            <button onclick="showFeedback('{{ assignment.id }}')" 
+                                                    class="inline-flex items-center text-sm text-primary-600 hover:text-primary-800">
+                                                <i class="fas fa-comment-alt mr-1"></i>
+                                                View Feedback
+                                            </button>
+                                            {% endif %}
+                                            {% if assignment.file %}
+                                            <a href="{{ assignment.file.url }}" target="_blank"
+                                               class="inline-flex items-center text-sm text-gray-600 hover:text-gray-800">
+                                                <i class="fas fa-eye mr-1"></i>
+                                                View
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="p-12 text-center">
+                        <div class="mx-auto h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                            <i class="fas fa-file-import text-gray-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">No submissions yet</h3>
+                        <p class="text-gray-500 mb-4">Start by uploading your first assignment</p>
+                        <a href="{% url 'upload_assignment' %}" 
+                           class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white gradient-primary hover:opacity-90">
+                            <i class="fas fa-cloud-upload-alt mr-2"></i>
+                            Upload Assignment
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if recent_assignments %}
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                    <a href="{% url 'student_assignments' %}" 
+                       class="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-800">
+                        View all submissions
+                        <i class="fas fa-arrow-right ml-2"></i>
                     </a>
                 </div>
                 {% endif %}
             </div>
         </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-links">
-                <a href="#">Help Center</a>
-                <a href="#">Academic Calendar</a>
-                <a href="#">Contact Support</a>
-                <a href="#">FAQs</a>
+        
+        <!-- Right Column: Quick Stats & Actions -->
+        <div class="space-y-6">
+            <!-- Current Courses -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-book mr-2 text-purple-500"></i>
+                        Current Courses
+                    </h2>
+                </div>
+                
+                <div class="p-6">
+                    {% if courses %}
+                    <div class="space-y-4">
+                        {% for course in courses|slice:":5" %}
+                        <div class="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h3 class="font-medium text-gray-900">{{ course.code }}</h3>
+                                    <p class="text-sm text-gray-500">{{ course.title }}</p>
+                                </div>
+                                <span class="text-xs font-medium text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                                    {{ course.credit_units }} CU
+                                </span>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm text-gray-600">
+                                <i class="fas fa-user-tie mr-2 text-gray-400"></i>
+                                {{ course.lecturer.user.full_name }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'student_courses' %}" 
+                           class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white gradient-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <i class="fas fa-list mr-2"></i>
+                            View All Courses
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-6">
+                        <i class="fas fa-book-open text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500">No courses assigned this semester</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="copyright">
-                &copy; 2024 Academic Portal. All rights reserved. | Student Dashboard v2.1
+            
+            <!-- Academic Performance -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-chart-line mr-2 text-green-500"></i>
+                        Academic Performance
+                    </h2>
+                </div>
+                
+                <div class="p-6">
+                    {% if performance_data %}
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-600">Average Grade</span>
+                            <span class="text-xl font-bold text-gray-900">{{ average_grade }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-600">Submission Rate</span>
+                            <span class="text-xl font-bold text-gray-900">{{ submission_rate }}%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-600">Pending Work</span>
+                            <span class="text-xl font-bold text-yellow-600">{{ pending_assignments }} assignments</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-6">
+                        <i class="fas fa-chart-bar text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500">Submit assignments to see your performance</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-6 bg-blue-50 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-lightbulb text-blue-500 text-xl mr-3"></i>
+                            <div>
+                                <p class="text-sm font-medium text-blue-900">Tip of the Day</p>
+                                <p class="text-xs text-blue-700 mt-1">Submit assignments early to get feedback sooner</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-bolt mr-2 text-yellow-500"></i>
+                        Quick Actions
+                    </h2>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <a href="{% url 'upload_assignment' %}" 
+                           class="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group">
+                            <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+                                <i class="fas fa-cloud-upload-alt text-blue-600 text-xl"></i>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900">Upload</span>
+                            <span class="text-xs text-gray-500">New assignment</span>
+                        </a>
+                        
+                        <a href="{% url 'student_assignments' %}" 
+                           class="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors group">
+                            <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-3 group-hover:bg-green-200 transition-colors">
+                                <i class="fas fa-history text-green-600 text-xl"></i>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900">History</span>
+                            <span class="text-xs text-gray-500">View all submissions</span>
+                        </a>
+                        
+                        <a href="{% url 'student_courses' %}" 
+                           class="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors group">
+                            <div class="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center mb-3 group-hover:bg-purple-200 transition-colors">
+                                <i class="fas fa-calendar-alt text-purple-600 text-xl"></i>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900">Schedule</span>
+                            <span class="text-xs text-gray-500">Course timetable</span>
+                        </a>
+                        
+                        <a href="{% url 'profile' %}" 
+                           class="flex flex-col items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors group">
+                            <div class="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mb-3 group-hover:bg-red-200 transition-colors">
+                                <i class="fas fa-cog text-red-600 text-xl"></i>
+                            </div>
+                            <span class="text-sm font-medium text-gray-900">Settings</span>
+                            <span class="text-xs text-gray-500">Profile & preferences</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    <script>
-        // Filter assignments by status
-        function filterAssignments(status) {
-            const rows = document.querySelectorAll('.assignment-row');
-            const buttons = document.querySelectorAll('.action-btn');
-            
-            // Update active button
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            
-            // Show/hide rows based on status
-            rows.forEach(row => {
-                if (status === 'all') {
-                    row.style.display = '';
-                } else if (row.dataset.status === status) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-            
-            // Animation for showing rows
-            const visibleRows = document.querySelectorAll('.assignment-row[style=""]');
-            visibleRows.forEach((row, index) => {
-                row.style.animation = `fadeIn 0.3s ease ${index * 0.05}s forwards`;
-                row.style.opacity = '0';
-            });
-        }
+<!-- Feedback Modal -->
+<div id="feedbackModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-comment-alt mr-2 text-blue-500"></i>
+                Assignment Feedback
+            </h3>
+            <button onclick="closeFeedback()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
         
-        // Tooltip for feedback preview
-        document.addEventListener('DOMContentLoaded', function() {
-            const feedbackElements = document.querySelectorAll('.feedback-preview');
-            feedbackElements.forEach(element => {
-                element.addEventListener('mouseenter', function(e) {
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'feedback-tooltip';
-                    tooltip.textContent = this.dataset.full;
-                    tooltip.style.position = 'absolute';
-                    tooltip.style.background = 'var(--gray-900)';
-                    tooltip.style.color = 'white';
-                    tooltip.style.padding = '0.75rem';
-                    tooltip.style.borderRadius = 'var(--radius)';
-                    tooltip.style.zIndex = '1000';
-                    tooltip.style.maxWidth = '300px';
-                    tooltip.style.boxShadow = 'var(--shadow-lg)';
-                    tooltip.style.whiteSpace = 'pre-wrap';
-                    
-                    document.body.appendChild(tooltip);
-                    
-                    const rect = this.getBoundingClientRect();
-                    tooltip.style.left = rect.left + 'px';
-                    tooltip.style.top = rect.bottom + 10 + 'px';
-                    
-                    this._tooltip = tooltip;
-                });
-                
-                element.addEventListener('mouseleave', function() {
-                    if (this._tooltip) {
-                        this._tooltip.remove();
-                    }
-                });
-            });
-            
-            // Add hover effect to table rows
-            const tableRows = document.querySelectorAll('.assignments-table tbody tr');
-            tableRows.forEach(row => {
-                row.addEventListener('mouseenter', function() {
-                    this.style.transition = 'all 0.2s ease';
-                });
-            });
-            
-            // Add loading animation to stats cards
-            const statCards = document.querySelectorAll('.stat-card');
-            statCards.forEach((card, index) => {
-                card.style.animation = `fadeIn 0.6s ease ${index * 0.1}s forwards`;
-                card.style.opacity = '0';
-            });
-            
-            // Welcome animation
-            const welcomeSection = document.querySelector('.welcome-section');
-            welcomeSection.style.animation = 'fadeIn 0.8s ease forwards';
+        <div class="p-6 overflow-y-auto">
+            <div id="feedbackContent">
+                <!-- Feedback content will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+            <button onclick="closeFeedback()" 
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filter assignments
+    function filterAssignments(status) {
+        const rows = document.querySelectorAll('.assignment-row');
+        const buttons = document.querySelectorAll('.filter-btn');
+        
+        // Update active button
+        buttons.forEach(btn => {
+            if (btn.textContent.trim().toLowerCase().includes(status)) {
+                btn.classList.add('bg-primary-600', 'text-white');
+                btn.classList.remove('bg-primary-100', 'text-primary-800');
+            } else {
+                btn.classList.remove('bg-primary-600', 'text-white');
+                btn.classList.add('bg-primary-100', 'text-primary-800');
+            }
         });
         
-        // Auto-refresh page every 2 minutes (optional)
+        // Filter rows
+        rows.forEach(row => {
+            if (status === 'all' || row.dataset.status === status) {
+                row.style.display = 'block';
+                row.classList.add('animate-slide-in');
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    // Show feedback modal
+    function showFeedback(assignmentId) {
+        const modal = document.getElementById('feedbackModal');
+        const content = document.getElementById('feedbackContent');
+        
+        // In a real application, you would fetch feedback from the server
+        // For now, we'll show a placeholder
+        const feedbackData = {
+            '1': {
+                title: 'Introduction to Programming Assignment',
+                grade: 'A',
+                lecturer: 'Dr. Jane Lecturer',
+                date: 'March 15, 2024',
+                feedback: 'Excellent work! Your code demonstrates a strong understanding of basic programming concepts. The structure is clean and well-organized. Some suggestions for improvement: Consider adding more comments for complex sections and implement error handling. Overall, great job!'
+            }
+        };
+        
+        const feedback = feedbackData[assignmentId] || {
+            title: 'Assignment Feedback',
+            grade: 'N/A',
+            lecturer: 'Lecturer',
+            date: 'Date',
+            feedback: 'No detailed feedback available for this assignment.'
+        };
+        
+        content.innerHTML = `
+            <div class="mb-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-2">${feedback.title}</h4>
+                <div class="flex items-center space-x-4 text-sm text-gray-500 mb-4">
+                    <span class="flex items-center">
+                        <i class="fas fa-graduation-cap mr-1"></i>
+                        Grade: <span class="font-bold ml-1">${feedback.grade}</span>
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-user-tie mr-1"></i>
+                        ${feedback.lecturer}
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-calendar-alt mr-1"></i>
+                        ${feedback.date}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h5 class="font-medium text-blue-900 mb-2 flex items-center">
+                    <i class="fas fa-comment-dots mr-2"></i>
+                    Lecturer's Feedback
+                </h5>
+                <p class="text-blue-800 whitespace-pre-wrap">${feedback.feedback}</p>
+            </div>
+            
+            <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h6 class="font-medium text-yellow-800 mb-2 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    Tips for Future Assignments
+                </h6>
+                <ul class="text-yellow-700 text-sm space-y-1">
+                    <li class="flex items-start">
+                        <i class="fas fa-check mt-1 mr-2 text-yellow-600"></i>
+                        Submit assignments well before the deadline
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check mt-1 mr-2 text-yellow-600"></i>
+                        Review the grading rubric before submission
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check mt-1 mr-2 text-yellow-600"></i>
+                        Include detailed comments in your code
+                    </li>
+                </ul>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+    }
+    
+    function closeFeedback() {
+        document.getElementById('feedbackModal').classList.add('hidden');
+    }
+    
+    // Progress circle animation
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressCircle = document.getElementById('progressCircle');
+        if (progressCircle) {
+            const offset = progressCircle.style.strokeDashoffset;
+            progressCircle.style.strokeDashoffset = '283'; // Start from full
+            setTimeout(() => {
+                progressCircle.style.strokeDashoffset = offset;
+            }, 300);
+        }
+        
+        // Add hover effects to assignment cards
+        const cards = document.querySelectorAll('.assignment-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.classList.add('shadow-lg');
+            });
+            card.addEventListener('mouseleave', () => {
+                card.classList.remove('shadow-lg');
+            });
+        });
+        
+        // Show welcome notification
         setTimeout(() => {
-            // Uncomment the line below to enable auto-refresh
-            // window.location.reload();
-        }, 120000); // 120000ms = 2 minutes
-    </script>
-</body>
-</html>
+            showNotification('Welcome to your student dashboard!', 'info');
+        }, 1000);
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+Shift+N for new assignment
+        if (e.ctrlKey && e.shiftKey && e.key === 'N') {
+            window.location.href = "{% url 'upload_assignment' %}";
+            e.preventDefault();
+        }
+        // Ctrl+Shift+V for view all
+        if (e.ctrlKey && e.shiftKey && e.key === 'V') {
+            window.location.href = "{% url 'student_assignments' %}";
+            e.preventDefault();
+        }
+        // Ctrl+Shift+C for courses
+        if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+            window.location.href = "{% url 'student_courses' %}";
+            e.preventDefault();
+        }
+    });
+    
+    // Auto-refresh stats every 30 seconds (optional)
+    // setInterval(() => {
+    //     fetch('/api/student/stats/')
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             // Update stats cards
+    //             updateStats(data);
+    //         });
+    // }, 30000);
+    
+    // function updateStats(data) {
+    //     // Update stat cards with new data
+    //     document.querySelectorAll('.stat-card .text-2xl').forEach((el, index) => {
+    //         const stats = [data.total_assignments, data.pending_assignments, data.graded_assignments, data.total_courses];
+    //         if (stats[index] !== undefined) {
+    //             el.textContent = stats[index];
+    //         }
+    //     });
+    // }
+</script>
+{% endblock %}
