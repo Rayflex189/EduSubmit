@@ -1,1100 +1,636 @@
+{% extends "base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grade Assignment - Academic Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #1E3A8A;
-            --primary-dark: #0F172A;
-            --primary-light: #3B82F6;
-            --secondary: #10B981;
-            --accent: #8B5CF6;
-            --light: #F8FAFC;
-            --gray-50: #F9FAFB;
-            --gray-100: #F3F4F6;
-            --gray-200: #E5E7EB;
-            --gray-300: #D1D5DB;
-            --gray-700: #374151;
-            --gray-900: #111827;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-            --radius-sm: 0.375rem;
-            --radius: 0.5rem;
-            --radius-lg: 0.75rem;
-            --radius-xl: 1rem;
-        }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            color: var(--gray-900);
-            line-height: 1.5;
-        }
-
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            padding: 1rem 2rem;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23000000" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,208C1248,224,1344,192,1392,176L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
-            background-size: cover;
-            opacity: 0.15;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 2;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            background: rgba(255, 255, 255, 0.15);
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .logo-text {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .logo-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: white;
-            letter-spacing: -0.5px;
-        }
-
-        .logo-subtitle {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.8);
-            letter-spacing: 0.5px;
-        }
-
-        .back-btn {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            background: rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        /* Main Content */
-        .main-container {
-            flex: 1;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            width: 100%;
-        }
-
-        .grade-card {
-            background: white;
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-xl);
-            overflow: hidden;
-            animation: cardFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes cardFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.98);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .card-header {
-            background: linear-gradient(to right, var(--primary), var(--primary-light));
-            padding: 2rem;
-            text-align: center;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        }
-
-        .card-icon {
-            background: rgba(255, 255, 255, 0.2);
-            width: 3.5rem;
-            height: 3.5rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 1.5rem;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .card-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            position: relative;
-            z-index: 2;
-        }
-
-        .card-subtitle {
-            font-size: 0.875rem;
-            opacity: 0.9;
-            max-width: 28rem;
-            margin: 0 auto;
-            position: relative;
-            z-index: 2;
-        }
-
-        .card-body {
-            padding: 2.5rem;
-        }
-
-        /* Student Information */
-        .student-info {
-            background: var(--gray-50);
-            border-radius: var(--radius-lg);
-            padding: 1.75rem;
-            margin-bottom: 2rem;
-            border: 1px solid var(--gray-200);
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .info-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .info-label {
-            font-size: 0.8125rem;
-            color: var(--gray-600);
-            margin-bottom: 0.375rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .info-label i {
-            font-size: 0.75rem;
-            color: var(--primary);
-        }
-
-        .info-value {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-
-        .matric-value {
-            font-family: 'Monaco', 'Courier New', monospace;
-            background: var(--gray-100);
-            padding: 0.375rem 0.75rem;
-            border-radius: var(--radius-sm);
-            display: inline-block;
-        }
-
-        .assignment-details {
-            padding: 1.25rem;
-            background: white;
-            border-radius: var(--radius);
-            border: 1px solid var(--gray-200);
-            margin-top: 1rem;
-        }
-
-        .assignment-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .assignment-description {
-            font-size: 0.9375rem;
-            color: var(--gray-700);
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }
-
-        .assignment-meta {
-            display: flex;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .meta-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .meta-label {
-            font-size: 0.75rem;
-            color: var(--gray-500);
-            margin-bottom: 0.25rem;
-        }
-
-        .meta-value {
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: var(--gray-900);
-        }
-
-        /* File Download */
-        .file-section {
-            text-align: center;
-            margin: 2rem 0;
-            padding: 1.5rem;
-            background: var(--gray-50);
-            border-radius: var(--radius-lg);
-            border: 2px dashed var(--gray-300);
-        }
-
-        .download-btn {
-            background: linear-gradient(to right, var(--primary), var(--primary-light));
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: var(--radius);
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
-        }
-
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(30, 58, 138, 0.3);
-        }
-
-        .file-info {
-            font-size: 0.875rem;
-            color: var(--gray-600);
-            margin-top: 0.75rem;
-        }
-
-        .no-file {
-            padding: 1.5rem;
-            background: #FEF3C7;
-            border-radius: var(--radius);
-            color: #92400E;
-            text-align: center;
-            margin: 2rem 0;
-        }
-
-        /* Previous Feedback */
-        .previous-feedback {
-            background: #F0F9FF;
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            margin: 2rem 0;
-            border-left: 4px solid #0EA5E9;
-        }
-
-        .feedback-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #0369A1;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .feedback-content {
-            font-size: 0.9375rem;
-            color: #0C4A6E;
-            line-height: 1.6;
-            font-style: italic;
-            padding-left: 0.5rem;
-            border-left: 2px solid #BAE6FD;
-        }
-
-        /* Grading Form */
-        .grading-form {
-            margin-top: 2rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.75rem;
-        }
-
-        .form-label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 600;
-            font-size: 0.9375rem;
-            color: var(--gray-700);
-            margin-bottom: 0.625rem;
-        }
-
-        .form-label i {
-            color: var(--primary);
-            font-size: 0.875rem;
-        }
-
-        .input-container {
-            position: relative;
-        }
-
-        .form-input, .form-textarea {
-            width: 100%;
-            padding: 0.9375rem 1rem;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius);
-            font-size: 0.9375rem;
-            font-family: 'Inter', sans-serif;
-            background: var(--gray-50);
-            transition: all 0.2s ease;
-            color: var(--gray-900);
-        }
-
-        .form-input:focus, .form-textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
-        }
-
-        .form-textarea {
-            resize: vertical;
-            min-height: 120px;
-            line-height: 1.6;
-        }
-
-        .grade-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 768px) {
-            .grade-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .status-display {
-            padding: 1rem;
-            background: var(--gray-50);
-            border-radius: var(--radius);
-            border: 1px solid var(--gray-200);
-            text-align: center;
-        }
-
-        .status-value {
-            font-weight: 600;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        .status-graded {
-            color: #059669;
-        }
-
-        .status-pending {
-            color: #D97706;
-        }
-
-        .form-help {
-            font-size: 0.75rem;
-            color: var(--gray-500);
-            margin-top: 0.375rem;
-            display: flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .form-help i {
-            font-size: 0.625rem;
-        }
-
-        /* Messages */
-        .message-container {
-            margin-bottom: 1.5rem;
-        }
-
-        .message {
-            padding: 1rem;
-            border-radius: var(--radius);
-            margin-bottom: 0.75rem;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .message-success {
-            background: #D1FAE5;
-            color: #065F46;
-            border: 1px solid #A7F3D0;
-        }
-
-        .message-error {
-            background: #FEE2E2;
-            color: #DC2626;
-            border: 1px solid #FCA5A5;
-        }
-
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2.5rem;
-        }
-
-        .submit-btn {
-            flex: 1;
-            padding: 1rem;
-            background: linear-gradient(to right, var(--secondary), #34D399);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
-        }
-
-        .cancel-btn {
-            flex: 1;
-            padding: 1rem;
-            background: var(--gray-300);
-            color: var(--gray-700);
-            border: none;
-            border-radius: var(--radius);
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            text-align: center;
-        }
-
-        .cancel-btn:hover {
-            background: var(--gray-400);
-            transform: translateY(-2px);
-        }
-
-        /* Loading Animation */
-        .loading-spinner {
-            display: none;
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .submit-btn.loading .loading-spinner {
-            display: block;
-        }
-
-        .submit-btn.loading span {
-            display: none;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--gray-900);
-            color: var(--gray-300);
-            padding: 1.5rem 2rem;
-            text-align: center;
-            font-size: 0.875rem;
-            margin-top: auto;
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .footer-links a {
-            color: var(--gray-400);
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-
-        .copyright {
-            font-size: 0.75rem;
-            color: var(--gray-500);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-
-            .main-container {
-                padding: 1rem;
-            }
-
-            .card-body {
-                padding: 1.5rem;
-            }
-
-            .info-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            .card-header {
-                padding: 1.5rem;
-            }
-
-            .card-title {
-                font-size: 1.5rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header {
-                padding: 1rem;
-            }
-
-            .assignment-meta {
-                flex-direction: column;
-                gap: 0.75rem;
-            }
-
-            .form-input, .form-textarea {
-                padding: 0.75rem 1rem;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <a href="{% url 'admin_dashboard' %}" class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                </div>
-                <div class="logo-text">
-                    <div class="logo-title">Academic Portal</div>
-                    <div class="logo-subtitle">Lecturer Dashboard</div>
-                </div>
-            </a>
-            <a href="{% url 'admin_dashboard' %}" class="back-btn">
-                <i class="fas fa-arrow-left"></i>
-                Back to Dashboard
-            </a>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-container">
-        <div class="grade-card">
-            <div class="card-header">
-                <div class="card-icon">
-                    <i class="fas fa-check-double"></i>
-                </div>
-                <h1 class="card-title">Grade Assignment</h1>
-                <p class="card-subtitle">Review and provide feedback for student submission</p>
-            </div>
-
-            <div class="card-body">
-                <!-- Messages -->
-                {% if messages %}
-                <div class="message-container">
-                    {% for message in messages %}
-                    <div class="message {% if message.tags == 'error' %}message-error{% else %}message-success{% endif %}">
-                        <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
-                        {{ message }}
+{% block title %}Grade Assignment - EduManage Pro{% endblock %}
+
+{% block page_header %}
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Grade Assignment</h1>
+        <p class="mt-2 text-gray-600">
+            <i class="fas fa-graduation-cap mr-2"></i>
+            Provide feedback and assessment for student submission
+        </p>
+    </div>
+    
+    <div class="flex flex-wrap gap-3">
+        <a href="{% url 'lecturer_dashboard' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Dashboard
+        </a>
+        {% if assignment.graded_by %}
+        <span class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm font-medium">
+            <i class="fas fa-check-circle mr-2"></i>
+            Previously Graded
+        </span>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Student & Assignment Info -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Assignment Card -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <span class="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full mr-3">
+                                    {{ assignment.course.code }}
+                                </span>
+                                <span class="text-sm text-gray-500">
+                                    <i class="fas fa-calendar-alt mr-1"></i>
+                                    {{ assignment.date_uploaded|date:"M d, Y" }}
+                                </span>
+                            </div>
+                            <h2 class="text-xl font-bold text-gray-900 mb-2">{{ assignment.title }}</h2>
+                            {% if assignment.description %}
+                            <p class="text-gray-600 mb-4">{{ assignment.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium 
+                                {% if assignment.status == 'graded' %}bg-green-100 text-green-800
+                                {% elif assignment.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif assignment.status == 'under_review' %}bg-blue-100 text-blue-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                <i class="fas {% if assignment.status == 'graded' %}fa-check
+                                    {% elif assignment.status == 'pending' %}fa-clock
+                                    {% elif assignment.status == 'under_review' %}fa-eye
+                                    {% else %}fa-redo{% endif %} mr-1"></i>
+                                {{ assignment.get_status_display }}
+                            </span>
+                        </div>
                     </div>
-                    {% endfor %}
                 </div>
-                {% endif %}
-
+                
+                <!-- File Preview -->
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-file-alt mr-2 text-blue-500"></i>
+                        Submitted File
+                    </h3>
+                    
+                    {% if assignment.file %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center mr-4">
+                                    <i class="fas fa-file-pdf text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Assignment Submission</p>
+                                    <p class="text-sm text-gray-500">
+                                        Uploaded: {{ assignment.date_uploaded|timesince }} ago
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{{ assignment.file.url }}" target="_blank"
+                                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white gradient-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    View
+                                </a>
+                                <a href="{{ assignment.file.url }}" download
+                                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                    <i class="fas fa-download mr-2"></i>
+                                    Download
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                        <i class="fas fa-file-exclamation text-gray-300 text-4xl mb-3"></i>
+                        <p class="text-gray-500">No file uploaded for this assignment</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
                 <!-- Student Information -->
-                <div class="student-info">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">
-                                <i class="fas fa-user"></i>
-                                Student Name
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-user-graduate mr-2 text-green-500"></i>
+                        Student Information
+                    </h3>
+                    
+                    <div class="bg-gray-50 rounded-lg p-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 mb-1">Student Name</p>
+                                <p class="text-lg font-semibold text-gray-900">{{ assignment.student.user.full_name }}</p>
                             </div>
-                            <div class="info-value">{{ assignment.student.full_name }}</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 mb-1">Matric Number</p>
+                                <p class="font-mono text-lg font-semibold text-gray-900">{{ assignment.student.matric_number }}</p>
+                            </div>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">
-                                <i class="fas fa-id-card"></i>
-                                Matric Number
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 mb-1">Department</p>
+                                <p class="text-gray-900">{{ assignment.student.department.name }}</p>
                             </div>
-                            <div class="info-value matric-value">{{ assignment.student.matric_number }}</div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 mb-1">Level</p>
+                                <p class="text-gray-900">{{ assignment.student.level.name }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500 mb-1">Faculty</p>
+                                <p class="text-gray-900">{{ assignment.student.faculty.name }}</p>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="assignment-details">
-                        <div class="assignment-title">
-                            <i class="fas fa-book"></i>
-                            {{ assignment.title }}
+                </div>
+            </div>
+            
+            <!-- Previous Feedback (if exists) -->
+            {% if assignment.feedback %}
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg p-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-comment-dots text-yellow-400 text-xl"></i>
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-lg font-medium text-yellow-800 mb-2">Previous Feedback</h3>
+                        <div class="text-yellow-700">
+                            {{ assignment.feedback }}
                         </div>
-                        {% if assignment.description %}
-                        <div class="assignment-description">
-                            {{ assignment.description }}
+                        {% if assignment.graded_by %}
+                        <div class="mt-3 text-sm text-yellow-600">
+                            <i class="fas fa-user-tie mr-1"></i>
+                            Graded by {{ assignment.graded_by.user.full_name }}
+                            {% if assignment.graded_date %}
+                            on {{ assignment.graded_date|date:"M d, Y" }}
+                            {% endif %}
                         </div>
                         {% endif %}
-                        <div class="assignment-meta">
-                            <div class="meta-item">
-                                <div class="meta-label">Submitted On</div>
-                                <div class="meta-value">{{ assignment.date_uploaded|date:"F d, Y" }}</div>
-                            </div>
-                            <div class="meta-item">
-                                <div class="meta-label">Current Grade</div>
-                                <div class="meta-value" style="color: {% if assignment.grade %}var(--primary){% else %}var(--gray-500){% endif %};">
-                                    {% if assignment.grade %}{{ assignment.grade }}{% else %}Not graded yet{% endif %}
-                                </div>
-                            </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Right Column: Grading Form -->
+        <div class="space-y-6">
+            <!-- Current Grade Status -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-star mr-2 text-yellow-500"></i>
+                    Current Assessment
+                </h3>
+                
+                <div class="space-y-4">
+                    {% if assignment.grade %}
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <div class="text-4xl font-bold text-green-600 mb-2">{{ assignment.grade }}</div>
+                        {% if assignment.score %}
+                        <div class="text-2xl font-semibold text-gray-700">{{ assignment.score }}/100</div>
+                        {% endif %}
+                        <p class="text-sm text-green-600 mt-2">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Graded on {{ assignment.graded_date|date:"M d, Y"|default:"previous date" }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                        <i class="fas fa-clock text-yellow-500 text-3xl mb-3"></i>
+                        <p class="text-lg font-medium text-yellow-800">Pending Assessment</p>
+                        <p class="text-sm text-yellow-600 mt-1">Awaiting your evaluation</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-blue-600 mb-1">Submission Date</p>
+                            <p class="font-semibold text-gray-900">{{ assignment.date_uploaded|date:"M d, Y" }}</p>
                         </div>
+                        {% if assignment.deadline %}
+                        <div class="text-center p-3 bg-blue-50 rounded-lg">
+                            <p class="text-sm text-blue-600 mb-1">Deadline</p>
+                            <p class="font-semibold text-gray-900">{{ assignment.deadline|date:"M d, Y" }}</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-
-                <!-- File Download -->
-                {% if assignment.file %}
-                <div class="file-section">
-                    <a href="{{ assignment.file.url }}" target="_blank">
-                        <button class="download-btn">
-                            <i class="fas fa-download"></i>
-                            Download Assignment File
-                        </button>
-                    </a>
-                    <div class="file-info">
-                        <i class="fas fa-external-link-alt"></i>
-                        File will open in a new tab
-                    </div>
-                </div>
-                {% else %}
-                <div class="no-file">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    No file uploaded for this assignment
-                </div>
-                {% endif %}
-
-                <!-- Previous Feedback -->
-                {% if assignment.feedback %}
-                <div class="previous-feedback">
-                    <div class="feedback-title">
-                        <i class="fas fa-comment-dots"></i>
-                        Previous Feedback
-                    </div>
-                    <div class="feedback-content">
-                        "{{ assignment.feedback }}"
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Grading Form -->
-                <form method="POST" class="grading-form" id="gradeForm">
+            </div>
+            
+            <!-- Grading Form -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-edit mr-2 text-primary-500"></i>
+                    Assessment Form
+                </h3>
+                
+                <form method="POST" id="gradingForm" class="space-y-6">
                     {% csrf_token %}
                     
-                    <div class="grade-grid">
-                        <div class="form-group">
-                            <label class="form-label" for="grade">
-                                <i class="fas fa-star"></i>
-                                Grade
-                            </label>
-                            <div class="input-container">
-                                <input type="text" 
-                                       name="grade" 
-                                       id="grade"
-                                       class="form-input"
-                                       value="{% if assignment.grade %}{{ assignment.grade }}{% endif %}"
-                                       placeholder="e.g., A, B+, 85, Pass"
-                                       maxlength="5"
-                                       required>
-                            </div>
-                            <div class="form-help">
-                                <i class="fas fa-info-circle"></i>
-                                Enter grade (e.g., A, B+, 85/100, Pass)
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-tag"></i>
-                                Status
-                            </label>
-                            <div class="status-display">
-                                <div class="status-value {% if assignment.grade %}status-graded{% else %}status-pending{% endif %}">
-                                    <i class="fas {% if assignment.grade %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
-                                    {% if assignment.grade %}✅ Graded{% else %}⏳ Pending Review{% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="feedback">
-                            <i class="fas fa-comment-medical"></i>
-                            Feedback / Comments
+                    <!-- Grade Input -->
+                    <div>
+                        <label for="grade" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-graduation-cap mr-1"></i>
+                            Grade
                         </label>
-                        <div class="input-container">
-                            <textarea name="feedback" 
-                                      id="feedback"
-                                      class="form-textarea"
-                                      placeholder="Provide detailed, constructive feedback to help the student improve..."
-                                      rows="6">{% if assignment.feedback %}{{ assignment.feedback }}{% endif %}</textarea>
+                        <div class="flex space-x-2 mb-3">
+                            {% for grade in 'A,B+,B,C+,C,D,E,F'|split:',' %}
+                            <button type="button" 
+                                    onclick="setGrade('{{ grade }}')"
+                                    class="flex-1 py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn"
+                                    data-grade="{{ grade }}">
+                                {{ grade }}
+                            </button>
+                            {% endfor %}
                         </div>
-                        <div class="form-help">
-                            <i class="fas fa-user-graduate"></i>
-                            Your feedback will be visible to the student
+                        <input type="text" 
+                               name="grade" 
+                               id="grade"
+                               value="{% if assignment.grade %}{{ assignment.grade }}{% endif %}"
+                               class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors"
+                               placeholder="Enter grade (A, B+, 85, etc.)"
+                               required>
+                        <p class="mt-2 text-sm text-gray-500">Enter a letter grade or numerical score</p>
+                    </div>
+                    
+                    <!-- Score Input -->
+                    <div>
+                        <label for="score" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-percentage mr-1"></i>
+                            Score (Optional)
+                        </label>
+                        <div class="flex items-center">
+                            <input type="number" 
+                                   name="score" 
+                                   id="score"
+                                   value="{% if assignment.score %}{{ assignment.score }}{% endif %}"
+                                   min="0" 
+                                   max="100" 
+                                   step="0.5"
+                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors"
+                                   placeholder="e.g., 85.5">
+                            <span class="ml-3 text-gray-500">/ 100</span>
+                        </div>
+                        <p class="mt-2 text-sm text-gray-500">Numerical score out of 100 (optional)</p>
+                    </div>
+                    
+                    <!-- Status Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-tag mr-1"></i>
+                            Status
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            {% for status_value, status_label in assignment_status_choices %}
+                            <label class="inline-flex items-center">
+                                <input type="radio" 
+                                       name="status" 
+                                       value="{{ status_value }}"
+                                       {% if assignment.status == status_value %}checked{% endif %}
+                                       class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
+                                <span class="ml-2 text-sm text-gray-700">{{ status_label }}</span>
+                            </label>
+                            {% endfor %}
                         </div>
                     </div>
-
+                    
+                    <!-- Feedback -->
+                    <div>
+                        <label for="feedback" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-comment-medical mr-1"></i>
+                            Feedback
+                        </label>
+                        <textarea name="feedback" 
+                                  id="feedback"
+                                  rows="6"
+                                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors"
+                                  placeholder="Provide constructive feedback for the student...">{% if assignment.feedback %}{{ assignment.feedback }}{% endif %}</textarea>
+                        <div class="mt-2 flex justify-between items-center text-sm text-gray-500">
+                            <span>
+                                <i class="fas fa-user-graduate mr-1"></i>
+                                Your feedback will be visible to the student
+                            </span>
+                            <span id="charCount">0/1000</span>
+                        </div>
+                    </div>
+                    
                     <!-- Action Buttons -->
-                    <div class="action-buttons">
-                        <button type="submit" class="submit-btn" id="submitBtn">
-                            <span>{% if assignment.grade %}Update Grade{% else %}Submit Grade{% endif %}</span>
-                            <div class="loading-spinner"></div>
-                            <i class="fas fa-check"></i>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" 
+                                id="submitBtn"
+                                class="flex-1 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white gradient-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            {% if assignment.grade %}Update Grade{% else %}Submit Grade{% endif %}
                         </button>
                         
-                        <a href="{% url 'admin_dashboard' %}" class="cancel-btn">
-                            <i class="fas fa-times"></i>
+                        <a href="{% url 'lecturer_dashboard' %}" 
+                           class="flex-1 inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            <i class="fas fa-times mr-2"></i>
                             Cancel
                         </a>
                     </div>
                 </form>
             </div>
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-links">
-                <a href="#">Grading Guidelines</a>
-                <a href="#">Rubric Templates</a>
-                <a href="#">Help Center</a>
-                <a href="#">Contact Support</a>
+            
+            <!-- Grading Tips -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="text-lg font-medium text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb mr-2 text-blue-500"></i>
+                    Grading Tips
+                </h3>
+                <ul class="space-y-2 text-sm text-blue-800">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle mt-1 mr-2 text-blue-500"></i>
+                        Be specific and constructive in your feedback
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle mt-1 mr-2 text-blue-500"></i>
+                        Reference the assignment rubric and learning objectives
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle mt-1 mr-2 text-blue-500"></i>
+                        Highlight both strengths and areas for improvement
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle mt-1 mr-2 text-blue-500"></i>
+                        Provide actionable suggestions for future assignments
+                    </li>
+                </ul>
             </div>
-            <div class="copyright">
-                &copy; 2024 Academic Portal. All rights reserved. | Lecturer Tools v2.1
-            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    <script>
-        // DOM Elements
-        const gradeInput = document.getElementById('grade');
-        const feedbackTextarea = document.getElementById('feedback');
-        const submitBtn = document.getElementById('submitBtn');
-        const gradeForm = document.getElementById('gradeForm');
+<!-- Loading Modal -->
+<div id="loadingModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-xl p-8 max-w-sm w-full mx-4">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Submitting Grade</h3>
+            <p class="text-gray-600">Please wait while we save your assessment...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-        // Auto-focus on grade field
-        document.addEventListener('DOMContentLoaded', function() {
-            if (gradeInput) {
-                gradeInput.focus();
-                // Move cursor to end if there's existing text
-                if (gradeInput.value) {
-                    gradeInput.setSelectionRange(gradeInput.value.length, gradeInput.value.length);
-                }
-            }
-            
-            // Character counter for feedback
-            if (feedbackTextarea) {
-                const charCounter = document.createElement('div');
-                charCounter.className = 'form-help';
-                charCounter.innerHTML = `
-                    <i class="fas fa-text-height"></i>
-                    Characters: <span id="charCount">${feedbackTextarea.value.length}</span> / 1000
-                `;
-                feedbackTextarea.parentNode.appendChild(charCounter);
-                
-                const charCountSpan = document.getElementById('charCount');
-                
-                feedbackTextarea.addEventListener('input', function() {
-                    const count = this.value.length;
-                    charCountSpan.textContent = count;
-                    charCountSpan.style.color = count > 800 ? '#DC2626' : count > 500 ? '#F59E0B' : 'var(--gray-700)';
-                });
-                
-                // Trigger initial count
-                feedbackTextarea.dispatchEvent(new Event('input'));
-            }
-            
-            // Add CSS classes to form inputs
-            if (gradeInput) {
-                gradeInput.classList.add('form-input');
-                if (!gradeInput.getAttribute('placeholder')) {
-                    gradeInput.setAttribute('placeholder', 'e.g., A, B+, 85, Pass');
-                }
-            }
-            
-            if (feedbackTextarea) {
-                feedbackTextarea.classList.add('form-textarea');
-            }
-        });
+{% block extra_js %}
+<script>
+    // Template filter for splitting string
+    Handlebars.registerHelper('split', function(string, delimiter) {
+        return string.split(delimiter);
+    });
 
-        // Form submission
-        gradeForm.addEventListener('submit', function(e) {
-            // Validate grade format
-            const gradeValue = gradeInput.value.trim();
-            if (!gradeValue) {
-                e.preventDefault();
-                showError(gradeInput, 'Please enter a grade');
-                return;
-            }
-            
-            // Basic grade format validation
-            const gradePattern = /^[A-F][+-]?$|^\d{1,3}\/100$|^\d{1,3}$|^PASS$|^FAIL$/i;
-            if (!gradePattern.test(gradeValue.toUpperCase())) {
-                e.preventDefault();
-                showError(gradeInput, 'Please enter a valid grade format (e.g., A, B+, 85, 85/100, Pass)');
-                return;
-            }
-            
-            // Show loading state
-            submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
-        });
-
-        // Show error function
-        function showError(element, message) {
-            // Remove any existing error
-            const existingError = element.parentNode.parentNode.querySelector('.error-message');
-            if (existingError) existingError.remove();
-            
-            // Create error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.style.color = '#DC2626';
-            errorDiv.style.fontSize = '0.75rem';
-            errorDiv.style.marginTop = '0.375rem';
-            errorDiv.style.display = 'flex';
-            errorDiv.style.alignItems = 'center';
-            errorDiv.style.gap = '0.375rem';
-            errorDiv.innerHTML = `
-                <i class="fas fa-exclamation-circle"></i>
-                ${message}
-            `;
-            
-            element.parentNode.parentNode.appendChild(errorDiv);
-            
-            // Highlight input
-            element.style.borderColor = '#DC2626';
-            element.style.animation = 'shake 0.5s ease';
-            
-            // Remove highlight after animation
-            setTimeout(() => {
-                element.style.animation = '';
-            }, 500);
-            
-            // Auto-remove error after 5 seconds
-            setTimeout(() => {
-                errorDiv.remove();
-                element.style.borderColor = '';
-            }, 5000);
-            
-            // Focus on the input
-            element.focus();
+    // Character counter for feedback
+    const feedbackTextarea = document.getElementById('feedback');
+    const charCountSpan = document.getElementById('charCount');
+    
+    function updateCharCount() {
+        const count = feedbackTextarea.value.length;
+        charCountSpan.textContent = `${count}/1000`;
+        
+        if (count > 1000) {
+            charCountSpan.classList.add('text-red-600');
+            charCountSpan.classList.remove('text-gray-500');
+        } else if (count > 800) {
+            charCountSpan.classList.add('text-yellow-600');
+            charCountSpan.classList.remove('text-gray-500', 'text-red-600');
+        } else {
+            charCountSpan.classList.remove('text-red-600', 'text-yellow-600');
+            charCountSpan.classList.add('text-gray-500');
         }
-
-        // Add shake animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-                20%, 40%, 60%, 80% { transform: translateX(5px); }
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + Enter to submit
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                if (!submitBtn.disabled) {
-                    gradeForm.submit();
-                }
-            }
-            
-            // Escape to go back
-            if (e.key === 'Escape') {
-                window.location.href = "{% url 'admin_dashboard' %}";
+    }
+    
+    if (feedbackTextarea) {
+        feedbackTextarea.addEventListener('input', updateCharCount);
+        // Initial count
+        updateCharCount();
+    }
+    
+    // Grade button selection
+    function setGrade(grade) {
+        document.getElementById('grade').value = grade;
+        
+        // Update button states
+        document.querySelectorAll('.grade-btn').forEach(btn => {
+            if (btn.dataset.grade === grade) {
+                btn.classList.add('bg-primary-100', 'border-primary-500', 'text-primary-700');
+                btn.classList.remove('border-gray-300', 'hover:bg-gray-50');
+            } else {
+                btn.classList.remove('bg-primary-100', 'border-primary-500', 'text-primary-700');
+                btn.classList.add('border-gray-300', 'hover:bg-gray-50');
             }
         });
-
-        // Auto-capitalize grades
+        
+        // Auto-set score based on grade (optional)
+        const gradeScores = {
+            'A': 90, 'B+': 85, 'B': 80, 'C+': 75, 'C': 70, 
+            'D': 65, 'E': 55, 'F': 45
+        };
+        
+        if (gradeScores[grade]) {
+            const scoreInput = document.getElementById('score');
+            if (!scoreInput.value) {
+                scoreInput.value = gradeScores[grade];
+            }
+        }
+    }
+    
+    // Initialize grade buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentGrade = document.getElementById('grade').value;
+        if (currentGrade) {
+            setGrade(currentGrade);
+        }
+        
+        // Auto-focus feedback if grade exists
+        if (currentGrade && feedbackTextarea) {
+            feedbackTextarea.focus();
+        }
+        
+        // Format grade input
+        const gradeInput = document.getElementById('grade');
         gradeInput.addEventListener('blur', function() {
-            const value = this.value.trim().toUpperCase();
-            this.value = value;
+            this.value = this.value.toUpperCase().trim();
         });
-
-        // Common grades quick select
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add quick grade buttons (optional feature)
-            const quickGrades = document.createElement('div');
-            quickGrades.className = 'quick-grades';
-            quickGrades.style.marginTop = '0.75rem';
-            quickGrades.style.display = 'flex';
-            quickGrades.style.gap = '0.5rem';
-            quickGrades.style.flexWrap = 'wrap';
-            
-            const grades = ['A', 'B+', 'B', 'C+', 'C', 'D', 'F', '85', 'PASS'];
-            grades.forEach(grade => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.textContent = grade;
-                btn.style.padding = '0.375rem 0.75rem';
-                btn.style.border = '1px solid var(--gray-300)';
-                btn.style.borderRadius = 'var(--radius-sm)';
-                btn.style.background = 'var(--gray-100)';
-                btn.style.color = 'var(--gray-700)';
-                btn.style.fontSize = '0.8125rem';
-                btn.style.cursor = 'pointer';
-                btn.style.transition = 'all 0.2s ease';
-                btn.addEventListener('mouseenter', () => {
-                    btn.style.background = 'var(--gray-200)';
-                    btn.style.transform = 'translateY(-1px)';
-                });
-                btn.addEventListener('mouseleave', () => {
-                    btn.style.background = 'var(--gray-100)';
-                    btn.style.transform = 'translateY(0)';
-                });
-                btn.addEventListener('click', () => {
-                    gradeInput.value = grade;
-                    gradeInput.focus();
-                });
-                quickGrades.appendChild(btn);
-            });
-            
-            gradeInput.parentNode.parentNode.appendChild(quickGrades);
-        });
-
-        // Prevent leaving page during submission
-        window.addEventListener('beforeunload', function(e) {
-            if (submitBtn.classList.contains('loading')) {
-                e.preventDefault();
-                e.returnValue = 'Grade submission is in progress. Are you sure you want to leave?';
-                return e.returnValue;
+    });
+    
+    // Form validation
+    const gradingForm = document.getElementById('gradingForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingModal = document.getElementById('loadingModal');
+    
+    gradingForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const gradeInput = document.getElementById('grade');
+        const grade = gradeInput.value.trim();
+        
+        if (!grade) {
+            showError(gradeInput, 'Please enter a grade');
+            return;
+        }
+        
+        // Validate grade format
+        const gradePattern = /^[A-F][+-]?$|^\d{1,3}(\.\d{1,2})?$|^\d{1,3}\/\d{1,3}$/i;
+        if (!gradePattern.test(grade.toUpperCase())) {
+            showError(gradeInput, 'Please enter a valid grade format (e.g., A, B+, 85, 85.5, 85/100)');
+            return;
+        }
+        
+        // Validate score if provided
+        const scoreInput = document.getElementById('score');
+        if (scoreInput.value) {
+            const score = parseFloat(scoreInput.value);
+            if (isNaN(score) || score < 0 || score > 100) {
+                showError(scoreInput, 'Score must be between 0 and 100');
+                return;
             }
+        }
+        
+        // Show loading modal
+        loadingModal.classList.remove('hidden');
+        submitBtn.disabled = true;
+        
+        // Submit form
+        setTimeout(() => {
+            gradingForm.submit();
+        }, 1000);
+    });
+    
+    function showError(element, message) {
+        // Remove existing error
+        const existingError = element.parentNode.querySelector('.error-message');
+        if (existingError) existingError.remove();
+        
+        // Add error styling
+        element.classList.add('border-red-500', 'bg-red-50');
+        
+        // Create error message
+        const errorDiv = document.createElement('p');
+        errorDiv.className = 'error-message mt-2 text-sm text-red-600 flex items-center';
+        errorDiv.innerHTML = `
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            ${message}
+        `;
+        
+        element.parentNode.appendChild(errorDiv);
+        
+        // Focus on the input
+        element.focus();
+        
+        // Remove error styling on input
+        element.addEventListener('input', function() {
+            this.classList.remove('border-red-500', 'bg-red-50');
+            errorDiv.remove();
         });
-    </script>
-</body>
-</html>
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + Enter to submit
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            if (!submitBtn.disabled) {
+                gradingForm.dispatchEvent(new Event('submit'));
+            }
+        }
+        
+        // Escape to cancel
+        if (e.key === 'Escape') {
+            window.location.href = "{% url 'lecturer_dashboard' %}";
+        }
+        
+        // Number keys for quick grades
+        if (e.altKey && e.key >= '1' && e.key <= '8') {
+            const grades = ['A', 'B+', 'B', 'C+', 'C', 'D', 'E', 'F'];
+            const index = parseInt(e.key) - 1;
+            if (grades[index]) {
+                setGrade(grades[index]);
+            }
+        }
+    });
+    
+    // Auto-calculate score from grade
+    document.getElementById('grade').addEventListener('change', function() {
+        const grade = this.value.toUpperCase();
+        const scoreInput = document.getElementById('score');
+        
+        // Only auto-fill if score is empty
+        if (!scoreInput.value) {
+            const gradeScores = {
+                'A': 90, 'A+': 95, 'A-': 87,
+                'B': 80, 'B+': 85, 'B-': 77,
+                'C': 70, 'C+': 75, 'C-': 67,
+                'D': 60, 'D+': 65, 'D-': 57,
+                'F': 45
+            };
+            
+            if (gradeScores[grade]) {
+                scoreInput.value = gradeScores[grade];
+            }
+        }
+    });
+    
+    // Prevent leaving page during submission
+    window.addEventListener('beforeunload', function(e) {
+        if (submitBtn.disabled) {
+            e.preventDefault();
+            e.returnValue = 'Your grading changes have not been saved. Are you sure you want to leave?';
+        }
+    });
+    
+    // Auto-save draft (optional feature)
+    let draftTimeout;
+    function saveDraft() {
+        const formData = {
+            grade: document.getElementById('grade').value,
+            score: document.getElementById('score').value,
+            feedback: document.getElementById('feedback').value,
+            status: document.querySelector('input[name="status"]:checked')?.value
+        };
+        
+        localStorage.setItem('grade_draft', JSON.stringify(formData));
+        showNotification('Draft saved locally', 'info', 2000);
+    }
+    
+    // Auto-save every 30 seconds
+    ['input', 'change'].forEach(event => {
+        gradingForm.addEventListener(event, function() {
+            clearTimeout(draftTimeout);
+            draftTimeout = setTimeout(saveDraft, 30000);
+        });
+    });
+    
+    // Load draft on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const draft = localStorage.getItem('grade_draft');
+        if (draft) {
+            try {
+                const data = JSON.parse(draft);
+                if (confirm('Would you like to restore your last draft?')) {
+                    document.getElementById('grade').value = data.grade || '';
+                    document.getElementById('score').value = data.score || '';
+                    document.getElementById('feedback').value = data.feedback || '';
+                    
+                    if (data.grade) {
+                        setGrade(data.grade);
+                    }
+                    
+                    if (data.status) {
+                        document.querySelector(`input[name="status"][value="${data.status}"]`).checked = true;
+                    }
+                    
+                    updateCharCount();
+                }
+            } catch (e) {
+                console.error('Failed to parse draft:', e);
+            }
+        }
+        
+        // Clear draft on successful submission
+        localStorage.removeItem('grade_draft');
+    });
+</script>
+{% endblock %}
