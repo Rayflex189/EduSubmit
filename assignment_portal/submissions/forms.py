@@ -6,6 +6,99 @@ from .models import (
 )
 from django.utils.translation import gettext_lazy as _
 
+class UserRegistrationForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter your university email'
+        })
+    )
+    
+    full_name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter your full name'
+        })
+    )
+    
+    matric_number = forms.CharField(
+        max_length=20,
+        required=False,  # Not required for lecturers
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter matric number'
+        })
+    )
+    
+    staff_id = forms.CharField(
+        max_length=20,
+        required=False,  # Not required for students
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter staff ID'
+        })
+    )
+    
+    class Meta:
+        model = UserProfile
+        fields = ['email', 'full_name', 'password1', 'password2']
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if UserProfile.objects.filter(email=email).exists():
+            raise forms.ValidationError("This email is already registered.")
+        return email
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        user_type = self.data.get('user_type')
+        
+        if user_type == 'student':
+            matric_number = cleaned_data.get('matric_number')
+            if not matric_number:
+                self.add_error('matric_number', 'Matric number is required for students.')
+            elif StudentProfile.objects.filter(matric_number=matric_number).exists():
+                self.add_error('matric_number', 'This matric number is already registered.')
+        
+        elif user_type == 'lecturer':
+            staff_id = cleaned_data.get('staff_id')
+            if not staff_id:
+                self.add_error('staff_id', 'Staff ID is required for lecturers.')
+            elif LecturerProfile.objects.filter(staff_id=staff_id).exists():
+                self.add_error('staff_id', 'This staff ID is already registered.')
+        
+        return cleaned_data
+
+class StudentProfileForm(forms.ModelForm):
+    faculty = forms.ModelChoiceField(
+        queryset=Faculty.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    level = forms.ModelChoiceField(
+        queryset=Level.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    class Meta:
+        model = StudentProfile
+        fields = ['faculty', 'department', 'level', 'admission_year', 'phone_number']
+        widgets = {
+            'admission_year': forms.NumberInput(attrs={'class': 'form-input'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-input'}),
+        }
+
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
         label=_('Username or Email'),
