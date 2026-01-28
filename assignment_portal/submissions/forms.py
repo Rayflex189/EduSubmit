@@ -6,6 +6,43 @@ from .models import (
 )
 from django.utils.translation import gettext_lazy as _
 
+
+class AssignmentForm(forms.ModelForm):
+    class Meta:
+        model = Assignment
+        fields = ['title', 'description', 'file']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-input',
+                'placeholder': 'Enter assignment title'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-textarea',
+                'placeholder': 'Optional description',
+                'rows': 4
+            }),
+            'file': forms.ClearableFileInput(attrs={
+                'class': 'file-input'
+            })
+        }
+    
+    def clean_file(self):
+        file = self.cleaned_data.get('file')
+        if file:
+            # Validate file size (20MB)
+            if file.size > 20 * 1024 * 1024:
+                raise forms.ValidationError("File size must not exceed 20MB.")
+            
+            # Validate file type
+            allowed_extensions = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.zip', '.rar']
+            ext = os.path.splitext(file.name)[1].lower()
+            if ext not in allowed_extensions:
+                raise forms.ValidationError(
+                    f"File type not supported. Allowed types: {', '.join(allowed_extensions)}"
+                )
+        
+        return file
+
 class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField(
         required=True,
