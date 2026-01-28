@@ -120,6 +120,7 @@ class Course(models.Model):
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     credit_units = models.IntegerField(default=3)
+    deadline = models.DateTimeField(null=True, blank=True, help_text="Assignment submission deadline")
     department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='courses')
     level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='courses')
     lecturer = models.ForeignKey(LecturerProfile, on_delete=models.SET_NULL, null=True, 
