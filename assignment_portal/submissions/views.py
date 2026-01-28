@@ -5,9 +5,10 @@ from django.contrib.auth.views import LoginView
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+
 from .forms import (
     UserRegistrationForm, StudentProfileForm, 
-    LecturerProfileForm, AssignmentForm, GradeAssignmentForm
+    LecturerProfileForm, AssignmentForm, GradeAssignmentForm, LecturerProfileForm
 )
 from .models import (
     UserProfile, StudentProfile, LecturerProfile, 
@@ -100,24 +101,83 @@ def login_view(request):
 def register(request):
     if request.method == 'POST':
         user_form = UserRegistrationForm(request.POST)
+        user_type = request.POST.get('user_type', 'student')
         
         if user_form.is_valid():
-            user = user_form.save()
-            user_type = user_form.cleaned_data.get('user_type')
+            # Create user
+            user = user_form.save(commit=False)
+            user.user_type = user_type
+            user.username = user_form.cleaned_data.get('email')  # Use email as username
+            user.save()
             
             # Create appropriate profile based on user type
             if user_type == 'student':
-                return redirect('complete_student_profile', user_id=user.id)
-            elif user_type == 'lecturer':
-                return redirect('complete_lecturer_profile', user_id=user.id)
+                # Redirect to complete student profile
+                request.session['new_user_id'] = user.id
+                request.session['user_type'] = 'student'
+                return redirect('complete_student_profile')
             
-            login(request, user)
-            return redirect('login')
+            elif user_type == 'lecturer':
+                # Create lecturer profile
+                lecturer_profile = LecturerProfile.objects.create(
+                    user=user,
+                    staff_id=request.POST.get('staff_id'),
+                    designation=request.POST.get('designation', 'Lecturer')
+                )
+                user.is_staff = True  # Make lecturer a staff member
+                user.save()
+                
+                # Auto-login and redirect
+                login(request, user)
+                messages.success(request, f'Welcome, {user.full_name}! Your lecturer account has been created.')
+                return redirect('lecturer_dashboard')
+        
+        else:
+            # Show form errors
+            for field, errors in user_form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    
     else:
         user_form = UserRegistrationForm()
     
-    return render(request, 'submissions/register.html', {'form': user_form})
+    return render(request, 'register.html', {'form': user_form})
 
+def complete_student_profile(request):
+    user_id = request.session.get('new_user_id')
+    if not user_id:
+        return redirect('register')
+    
+    user = get_object_or_404(UserProfile, id=user_id)
+    
+    if request.method == 'POST':
+        profile_form = StudentProfileForm(request.POST)
+        if profile_form.is_valid():
+            student_profile = profile_form.save(commit=False)
+            student_profile.user = user
+            student_profile.matric_number = user_form.cleaned_data.get('matric_number')  # From registration
+            student_profile.save()
+            
+            # Clear session
+            del request.session['new_user_id']
+            del request.session['user_type']
+            
+            # Auto-login and redirect
+            login(request, user)
+            messages.success(request, f'Welcome, {user.full_name}! Your student profile is now complete.')
+            return redirect('student_dashboard')
+    else:
+        profile_form = StudentProfileForm()
+    
+    context = {
+        'user': user,
+        'form': profile_form,
+        'faculties': Faculty.objects.all(),
+        'departments': Department.objects.all(),
+        'levels': Level.objects.all()
+    }
+    
+    return render(request, 'complete_student_profile.html', context)
 
 def complete_student_profile(request, user_id):
     user = get_object_or_404(UserProfile, id=user_id)
