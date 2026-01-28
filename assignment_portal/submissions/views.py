@@ -22,9 +22,9 @@ def is_lecturer(user):
     return hasattr(user, 'lecturer_profile')
 
 
-# ---------- Authentication Views ----------
 class CustomLoginView(LoginView):
-    template_name = 'submissions/login.html'
+    template_name = 'login.html'
+    redirect_authenticated_user = True
     
     def get_success_url(self):
         user = self.request.user
@@ -35,7 +35,67 @@ class CustomLoginView(LoginView):
         elif user.is_superuser:
             return '/admin/'
         return '/'
+    
+    def form_valid(self, form):
+        # Custom login logic if needed
+        username = form.cleaned_data.get('username')
+        password = form.cleaned_data.get('password')
+        user = authenticate(self.request, username=username, password=password)
+        
+        if user is not None:
+            login(self.request, user)
+            
+            # Set session timeout based on remember me
+            if not self.request.POST.get('remember'):
+                self.request.session.set_expiry(0)  # Browser session
+            else:
+                self.request.session.set_expiry(1209600)  # 2 weeks
+            
+            messages.success(self.request, f'Welcome back, {user.full_name}!')
+            return redirect(self.get_success_url())
+        
+        return super().form_invalid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Invalid username or password. Please try again.')
+        return super().form_invalid(form)
 
+# Or for function-based view:
+def login_view(request):
+    if request.user.is_authenticated:
+        # Redirect based on user type
+        if hasattr(request.user, 'student_profile'):
+            return redirect('student_dashboard')
+        elif hasattr(request.user, 'lecturer_profile'):
+            return redirect('lecturer_dashboard')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            
+            # Set session expiry based on remember me
+            if not request.POST.get('remember'):
+                request.session.set_expiry(0)
+            
+            messages.success(request, f'Welcome back, {user.full_name}!')
+            
+            # Redirect based on user type
+            if hasattr(user, 'student_profile'):
+                return redirect('student_dashboard')
+            elif hasattr(user, 'lecturer_profile'):
+                return redirect('lecturer_dashboard')
+            elif user.is_superuser:
+                return redirect('/admin/')
+            return redirect('dashboard')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    
+    return render(request, 'submissions/login.html')
 
 def register(request):
     if request.method == 'POST':
