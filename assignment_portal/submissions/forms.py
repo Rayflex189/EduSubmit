@@ -4,7 +4,35 @@ from .models import (
     UserProfile, StudentProfile, LecturerProfile, 
     Faculty, Department, Level, Assignment
 )
+from django.utils.translation import gettext_lazy as _
 
+class CustomLoginForm(AuthenticationForm):
+    username = forms.CharField(
+        label=_('Username or Email'),
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter your username or email',
+            'autocomplete': 'username',
+            'autofocus': True,
+        })
+    )
+    
+    password = forms.CharField(
+        label=_('Password'),
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Enter your password',
+            'autocomplete': 'current-password',
+        })
+    )
+    
+    remember = forms.BooleanField(
+        required=False,
+        label=_('Remember me'),
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-checkbox',
+        })
+    )
 
 class UserRegistrationForm(UserCreationForm):
     USER_TYPE_CHOICES = [
