@@ -226,31 +226,70 @@ def complete_lecturer_profile(request, user_id):
         'user': user
     })
 
-
-# ---------- Student Views ----------
 @login_required
 @user_passes_test(is_student)
 def student_dashboard(request):
     student = request.user.student_profile
-    assignments = Assignment.objects.filter(student=student).order_by('-date_uploaded')[:5]
-    courses = Course.objects.filter(department=student.department, level=student.level)
+    
+    # Get student's assignments
+    assignments = Assignment.objects.filter(
+        student=student
+    ).select_related('course', 'course__lecturer__user')
+    
+    # Get student's current courses
+    current_courses = Course.objects.filter(
+        department=student.department,
+        level=student.level,
+        is_active=True
+    ).select_related('lecturer__user')
     
     # Calculate statistics
-    total_assignments = Assignment.objects.filter(student=student).count()
-    pending_assignments = Assignment.objects.filter(student=student, status='pending').count()
-    graded_assignments = Assignment.objects.filter(student=student, status='graded').count()
+    total_assignments = assignments.count()
+    graded_assignments = assignments.filter(status='graded').count()
+    pending_assignments = assignments.filter(status__in=['pending', 'under_review']).count()
+    total_courses = current_courses.count()
+    
+    # Calculate completion percentage
+    completed_courses = current_courses.filter(
+        assignments__student=student,
+        assignments__status='graded'
+    ).distinct().count()
+    completion_percentage = (completed_courses / total_courses * 100) if total_courses > 0 else 0
+    
+    # Calculate average grade
+    graded_scores = assignments.filter(score__isnull=False).values_list('score', flat=True)
+    average_grade = round(sum(graded_scores) / len(graded_scores), 1) if graded_scores else 'N/A'
+    
+    # Calculate submission rate
+    total_possible_assignments = sum(course.assignments.count() for course in current_courses)
+    submission_rate = (total_assignments / total_possible_assignments * 100) if total_possible_assignments > 0 else 0
+    
+    # Get recent assignments (last 5)
+    recent_assignments = assignments.order_by('-date_uploaded')[:5]
+    
+    # Prepare performance data
+    performance_data = {
+        'average_grade': average_grade,
+        'submission_rate': round(submission_rate),
+        'pending_work': pending_assignments,
+    }
     
     context = {
         'student': student,
         'assignments': assignments,
-        'courses': courses,
+        'recent_assignments': recent_assignments,
+        'courses': current_courses,
         'total_assignments': total_assignments,
-        'pending_assignments': pending_assignments,
         'graded_assignments': graded_assignments,
+        'pending_assignments': pending_assignments,
+        'total_courses': total_courses,
+        'completion_percentage': round(completion_percentage),
+        'performance_data': performance_data,
+        'average_grade': average_grade,
+        'submission_rate': round(submission_rate),
     }
     
-    return render(request, 'submissions/student_dashboard.html', context)
-
+    return render(request, 'student_dashboard.html', context)
 
 @login_required
 @user_passes_test(is_student)
