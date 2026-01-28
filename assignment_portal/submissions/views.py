@@ -290,34 +290,71 @@ def student_dashboard(request):
     }
     
     return render(request, 'student_dashboard.html', context)
-
+    
 @login_required
 @user_passes_test(is_student)
 def upload_assignment(request):
     student = request.user.student_profile
     
+    # Get student's current courses
+    current_courses = Course.objects.filter(
+        department=student.department,
+        level=student.level,
+        is_active=True
+    ).select_related('lecturer__user')
+    
+    # Get recent uploads
+    recent_uploads = Assignment.objects.filter(
+        student=student
+    ).select_related('course').order_by('-date_uploaded')[:5]
+    
     if request.method == 'POST':
         form = AssignmentForm(request.POST, request.FILES)
+        
         if form.is_valid():
             assignment = form.save(commit=False)
             assignment.student = student
+            
+            # Get selected course
+            course_id = request.POST.get('course')
+            if course_id:
+                try:
+                    course = Course.objects.get(id=course_id)
+                    assignment.course = course
+                except Course.DoesNotExist:
+                    messages.error(request, 'Invalid course selected.')
+                    return redirect('upload_assignment')
+            
+            # Set additional fields
+            assignment.status = 'pending'
+            assignment.date_uploaded = timezone.now()
+            
             assignment.save()
-            messages.success(request, 'Assignment uploaded successfully!')
+            
+            # Create notification for lecturer
+            messages.success(
+                request, 
+                f'Assignment "{assignment.title}" uploaded successfully!'
+            )
+            
+            # Clear any saved draft
+            if 'assignment_draft' in request.session:
+                del request.session['assignment_draft']
+            
             return redirect('student_dashboard')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = AssignmentForm()
     
-    # Get courses available for student's level and department
-    courses = Course.objects.filter(
-        department=student.department,
-        level=student.level
-    )
-    
-    return render(request, 'submissions/upload_assignment.html', {
-        'form': form,
+    context = {
         'student': student,
-        'courses': courses
-    })
+        'courses': current_courses,
+        'recent_uploads': recent_uploads,
+        'form': form,
+    }
+    
+    return render(request, 'upload_assignment.html', context)
 
 
 @login_required
