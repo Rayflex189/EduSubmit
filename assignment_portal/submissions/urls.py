@@ -1,4 +1,4 @@
-from django.urls import path, include
+this is the my submission app urls from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from . import views
@@ -28,11 +28,11 @@ urlpatterns = [
     path('lecturer/students/', views.lecturer_students, name='lecturer_students'),
     
     # API URLs
-    path('api/students/', include('students.api.urls')),
-    path('api/lecturers/', include('lecturers.api.urls')),
+    #path('api/students/', include('students.api.urls')),
+    #path('api/lecturers/', include('lecturers.api.urls')),
     
     # Admin URLs
-    path('admin/', admin.site.urls),
+    #path('admin/', admin.site.urls),
 ]
 
 # Dynamically create lecturer admin URLs
