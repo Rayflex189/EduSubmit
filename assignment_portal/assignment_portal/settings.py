@@ -53,7 +53,7 @@ ALLOWED_HOSTS = ["*", ".githubpreview.dev"]
 
 # Application definition
 
-AUTH_USER_MODEL = 'submissions.StudentProfile'
+AUTH_USER_MODEL = 'submissions.UserProfile'
 
 
 INSTALLED_APPS = [
