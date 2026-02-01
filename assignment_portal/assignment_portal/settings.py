@@ -151,3 +151,23 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# assignment_portal/settings.py
+
+# Email Configuration (for development)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development
+# For production, use:
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'your-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'your-password'
+
+# Default from email
+DEFAULT_FROM_EMAIL = 'noreply@edumanage.edu'
+SERVER_EMAIL = 'server@edumanage.edu'
+
+# Site information (for password reset emails)
+SITE_NAME = "EduManage Pro"
+DOMAIN = "localhost:8000"  # Change this to your domain in production
