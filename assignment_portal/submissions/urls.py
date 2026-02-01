@@ -25,20 +25,30 @@ urlpatterns = [
     path('lecturer/students/', views.lecturer_students, name='lecturer_students'),
 ]
 
-def _get_lecturer_admin_urls():
-    """Inner function that queries the database - only called when needed"""
-    from .models import LecturerProfile  # Import here to avoid circular imports
-    urls = []
-    for lecturer in LecturerProfile.objects.all():
-        lecturer_site = LecturerAdminSite(lecturer, name=f'lecturer_{lecturer.staff_id}')
-        # Register models on the site
-        from .models import Course, Assignment
-        from .admin import CourseAdmin, AssignmentAdmin
-        lecturer_site.register(Course, CourseAdmin)
-        lecturer_site.register(Assignment, AssignmentAdmin)
-        urls.append(path(f'lecturer/{lecturer.staff_id}/admin/', lecturer_site.urls))
-    return urls
+# Add this at the BOTTOM of your urls.py AFTER successful migrations
+import sys
 
-# Use SimpleLazyObject to delay execution until first access
-lecturer_urls = SimpleLazyObject(lambda: _get_lecturer_admin_urls())
-urlpatterns += lecturer_urls
+# Only add lecturer URLs if we're not running migrations
+if 'makemigrations' not in sys.argv and 'migrate' not in sys.argv:
+    try:
+        from .models import LecturerProfile
+        
+        def _get_lecturer_admin_urls():
+            """Inner function that queries the database - only called when needed"""
+            urls = []
+            for lecturer in LecturerProfile.objects.all():
+                lecturer_site = LecturerAdminSite(lecturer, name=f'lecturer_{lecturer.staff_id}')
+                # Register models on the site
+                from .models import Course, Assignment
+                from .admin import CourseAdmin, AssignmentAdmin
+                lecturer_site.register(Course, CourseAdmin)
+                lecturer_site.register(Assignment, AssignmentAdmin)
+                urls.append(path(f'lecturer/{lecturer.staff_id}/admin/', lecturer_site.urls))
+            return urls
+        
+        # Use SimpleLazyObject to delay execution until first access
+        lecturer_urls = SimpleLazyObject(lambda: _get_lecturer_admin_urls())
+        urlpatterns += lecturer_urls
+    except Exception as e:
+        print(f"Warning: Could not create lecturer admin URLs: {e}")
+        # Continue without lecturer admin URLs

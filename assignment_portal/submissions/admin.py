@@ -69,6 +69,7 @@ class DepartmentAdmin(admin.ModelAdmin):
 @admin.register(Level)
 class LevelAdmin(admin.ModelAdmin):
     list_display = ('name', 'description')
+    search_fields = ('name', 'description')
 
 
 @admin.register(StudentProfile)
