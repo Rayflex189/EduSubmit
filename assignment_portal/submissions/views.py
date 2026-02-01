@@ -146,7 +146,7 @@ def register(request):
 def complete_student_profile(request):
     user_id = request.session.get('new_user_id')
     if not user_id:
-        return redirect('register')
+        return redirect('registrationk,,/register')
     
     user = get_object_or_404(UserProfile, id=user_id)
     
@@ -177,28 +177,7 @@ def complete_student_profile(request):
         'levels': Level.objects.all()
     }
     
-    return render(request, 'complete_student_profile.html', context)
-
-def complete_student_profile(request, user_id):
-    user = get_object_or_404(UserProfile, id=user_id)
-    
-    if request.method == 'POST':
-        profile_form = StudentProfileForm(request.POST)
-        if profile_form.is_valid():
-            student_profile = profile_form.save(commit=False)
-            student_profile.user = user
-            student_profile.save()
-            
-            # Authenticate and login
-            login(request, user)
-            return redirect('student_dashboard')
-    else:
-        profile_form = StudentProfileForm()
-    
-    return render(request, 'submissions/complete_student_profile.html', {
-        'form': profile_form,
-        'user': user
-    })
+    return render(request, 'submissions/complete_student_profile.html', context)
 
 
 def complete_lecturer_profile(request, user_id):
