@@ -141,7 +141,7 @@ def register(request):
     else:
         user_form = UserRegistrationForm()
     
-    return render(request, 'register.html', {'form': user_form})
+    return render(request, 'registration/register.html', {'form': user_form})
 
 def complete_student_profile(request):
     user_id = request.session.get('new_user_id')

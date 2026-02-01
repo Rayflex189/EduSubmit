@@ -424,7 +424,6 @@
         <p class="text-sm text-gray-500 mt-2">Please wait while we set up your profile</p>
     </div>
 </div>
-
 <script>
     // User type selection
     let selectedUserType = '';
@@ -523,6 +522,12 @@
         const form = document.getElementById(formId);
         let isValid = true;
         
+        // Clear previous errors
+        form.querySelectorAll('.field-error').forEach(error => error.remove());
+        form.querySelectorAll('.border-red-500, .bg-red-50').forEach(field => {
+            field.classList.remove('border-red-500', 'bg-red-50');
+        });
+        
         // Check required fields
         const requiredFields = form.querySelectorAll('[required]');
         requiredFields.forEach(field => {
@@ -550,11 +555,17 @@
             isValid = false;
         }
         
+        // Validate password strength for both
+        if (password1 && password1.value.length < 8) {
+            showFieldError(password1, 'Password must be at least 8 characters');
+            isValid = false;
+        }
+        
         // For student: validate matric number format
         if (userType === 'student') {
             const matricField = document.getElementById('student_matric_number');
             if (matricField && !/^[A-Za-z0-9]{6,10}$/.test(matricField.value)) {
-                showFieldError(matricField, 'Please enter a valid matric number');
+                showFieldError(matricField, 'Please enter a valid matric number (6-10 alphanumeric characters)');
                 isValid = false;
             }
         }
@@ -563,7 +574,7 @@
         if (userType === 'lecturer') {
             const staffIdField = document.getElementById('lecturer_staff_id');
             if (staffIdField && !/^[A-Za-z0-9]{3,10}$/.test(staffIdField.value)) {
-                showFieldError(staffIdField, 'Please enter a valid staff ID');
+                showFieldError(staffIdField, 'Please enter a valid staff ID (3-10 alphanumeric characters)');
                 isValid = false;
             }
         }
@@ -599,31 +610,35 @@
         field.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     
-    // Form submission handlers
+    // Form submission handlers - FIXED VERSION
     document.getElementById('studentRegistrationForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        if (validateForm('studentRegistrationForm', 'student')) {
-            showLoading();
-            setTimeout(() => {
-                this.submit();
-            }, 1000);
+        // Only prevent default if validation fails
+        if (!validateForm('studentRegistrationForm', 'student')) {
+            e.preventDefault();
+            return false;
         }
+        // If validation passes, show loading and let form submit normally
+        showLoading();
+        // Form will submit normally after this function returns
     });
     
     document.getElementById('lecturerRegistrationForm')?.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        if (validateForm('lecturerRegistrationForm', 'lecturer')) {
-            showLoading();
-            setTimeout(() => {
-                this.submit();
-            }, 1000);
+        // Only prevent default if validation fails
+        if (!validateForm('lecturerRegistrationForm', 'lecturer')) {
+            e.preventDefault();
+            return false;
         }
+        // If validation passes, show loading and let form submit normally
+        showLoading();
+        // Form will submit normally after this function returns
     });
     
     function showLoading() {
         document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+    
+    function hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
     }
     
     // Auto-capitalize matric and staff IDs
@@ -673,21 +688,42 @@
         }
     }
     
-    // For testing/demo purposes
-    // Uncomment to enable demo data buttons
-    // document.addEventListener('DOMContentLoaded', function() {
-    //     // Add demo buttons
-    //     const demoDiv = document.createElement('div');
-    //     demoDiv.className = 'text-center mt-4 space-x-4';
-    //     demoDiv.innerHTML = `
-    //         <button onclick="loadDemoData('student')" class="text-sm text-blue-600 hover:text-blue-800">
-    //             Load Student Demo
-    //         </button>
-    //         <button onclick="loadDemoData('lecturer')" class="text-sm text-green-600 hover:text-green-800">
-    //             Load Lecturer Demo
-    //         </button>
-    //     `;
-    //     document.querySelector('.text-center:last-child').after(demoDiv);
-    // });
+    // Debug function to check form submission
+    function debugFormSubmission(formId) {
+        const form = document.getElementById(formId);
+        console.log('Form elements:');
+        Array.from(form.elements).forEach(element => {
+            console.log(`${element.name}: ${element.value}`);
+        });
+        console.log('Form will submit to:', form.action);
+        console.log('Form method:', form.method);
+    }
+    
+    // Add debug buttons for testing
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add debug buttons (optional - remove in production)
+        const debugDiv = document.createElement('div');
+        debugDiv.className = 'text-center mt-4 space-x-4 text-xs';
+        debugDiv.innerHTML = `
+            <button onclick="loadDemoData('student')" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-3 py-1 rounded">
+                Load Student Demo
+            </button>
+            <button onclick="loadDemoData('lecturer')" class="text-green-600 hover:text-green-800 bg-green-50 px-3 py-1 rounded">
+                Load Lecturer Demo
+            </button>
+            <button onclick="debugFormSubmission('studentRegistrationForm')" class="text-gray-600 hover:text-gray-800 bg-gray-50 px-3 py-1 rounded">
+                Debug Student Form
+            </button>
+            <button onclick="debugFormSubmission('lecturerRegistrationForm')" class="text-gray-600 hover:text-gray-800 bg-gray-50 px-3 py-1 rounded">
+                Debug Lecturer Form
+            </button>
+        `;
+        document.querySelector('.text-center:last-child').after(debugDiv);
+        
+        // Test form submission (optional)
+        console.log('Registration page loaded');
+        console.log('Student form exists:', !!document.getElementById('studentRegistrationForm'));
+        console.log('Lecturer form exists:', !!document.getElementById('lecturerRegistrationForm'));
+    });
 </script>
 {% endblock %}
