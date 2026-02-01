@@ -24,7 +24,7 @@ def is_lecturer(user):
 
 
 class CustomLoginView(LoginView):
-    template_name = 'login.html'
+    template_name = 'submissions/login.html'
     redirect_authenticated_user = True
     
     def get_success_url(self):
@@ -87,9 +87,9 @@ def login_view(request):
             
             # Redirect based on user type
             if hasattr(user, 'student_profile'):
-                return redirect('student_dashboard')
+                return redirect('submissions/student_dashboard')
             elif hasattr(user, 'lecturer_profile'):
-                return redirect('lecturer_dashboard')
+                return redirect('submissions/lecturer_dashboard')
             elif user.is_superuser:
                 return redirect('/admin/')
             return redirect('dashboard')
