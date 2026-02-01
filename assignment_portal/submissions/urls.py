@@ -41,4 +41,4 @@ def _get_lecturer_admin_urls():
 
 # Use SimpleLazyObject to delay execution until first access
 lecturer_urls = SimpleLazyObject(lambda: _get_lecturer_admin_urls())
-urlpatterns += lecturer_urlsgit
+urlpatterns += lecturer_urls
