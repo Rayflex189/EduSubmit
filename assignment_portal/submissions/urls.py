@@ -1,12 +1,9 @@
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
+from django.utils.functional import SimpleLazyObject
 from . import views
 from .admin import LecturerAdminSite
-
-# Import all lecturer profiles to create their admin sites
-# This would typically be done dynamically
-from .models import LecturerProfile
 
 urlpatterns = [
     path('', lambda request: redirect('login')),
@@ -26,21 +23,22 @@ urlpatterns = [
     path('lecturer/courses/', views.lecturer_courses, name='lecturer_courses'),
     path('lecturer/grade/<int:assignment_id>/', views.grade_assignment, name='grade_assignment'),
     path('lecturer/students/', views.lecturer_students, name='lecturer_students'),
-    
-    # API URLs
-    #path('api/students/', include('students.api.urls')),
-    #path('api/lecturers/', include('lecturers.api.urls')),
-    
-    # Admin URLs
-    #path('admin/', admin.site.urls),
 ]
 
-# Dynamically create lecturer admin URLs
-def get_lecturer_admin_urls():
+def _get_lecturer_admin_urls():
+    """Inner function that queries the database - only called when needed"""
+    from .models import LecturerProfile  # Import here to avoid circular imports
     urls = []
     for lecturer in LecturerProfile.objects.all():
         lecturer_site = LecturerAdminSite(lecturer, name=f'lecturer_{lecturer.staff_id}')
+        # Register models on the site
+        from .models import Course, Assignment
+        from .admin import CourseAdmin, AssignmentAdmin
+        lecturer_site.register(Course, CourseAdmin)
+        lecturer_site.register(Assignment, AssignmentAdmin)
         urls.append(path(f'lecturer/{lecturer.staff_id}/admin/', lecturer_site.urls))
     return urls
 
-urlpatterns += get_lecturer_admin_urls()
+# Use SimpleLazyObject to delay execution until first access
+lecturer_urls = SimpleLazyObject(lambda: _get_lecturer_admin_urls())
+urlpatterns += lecturer_urlsgit
