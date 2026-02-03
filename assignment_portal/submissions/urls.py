@@ -10,6 +10,8 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('complete_student_profile/', views.complete_student_profile, name='complete_student_profile'),
+    path('complete_lecturer_profile/', views.complete_lecturer_profile, name='complete_lecturer_profile'),
     
     # Student URLs
     path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
@@ -23,6 +25,8 @@ urlpatterns = [
     path('lecturer/courses/', views.lecturer_courses, name='lecturer_courses'),
     path('lecturer/grade/<int:assignment_id>/', views.grade_assignment, name='grade_assignment'),
     path('lecturer/students/', views.lecturer_students, name='lecturer_students'),
+
+
 
     # Password Reset URLs
     path('password-reset/', 
