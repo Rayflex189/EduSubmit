@@ -115,7 +115,7 @@ def register(request):
                 # Redirect to complete student profile
                 request.session['new_user_id'] = user.id
                 request.session['user_type'] = 'student'
-                return redirect('complete_student_profile')
+                return redirect('submissions/complete_student_profile')
             
             elif user_type == 'lecturer':
                 # Create lecturer profile
