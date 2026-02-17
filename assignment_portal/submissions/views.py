@@ -172,7 +172,7 @@ def complete_student_profile(request):
     }
     
     return render(request, 'submissions/complete_student_profile.html', context)
-
+    
 def complete_lecturer_profile(request):
     user_id = request.session.get('new_user_id')
     if not user_id:
@@ -181,29 +181,30 @@ def complete_lecturer_profile(request):
     user = get_object_or_404(UserProfile, id=user_id)
     
     if request.method == 'POST':
-        # Get form data directly from POST
-        phone = request.POST.get('phone', '')
-        office = request.POST.get('office', '')
-        bio = request.POST.get('bio', '')
+        # Get form data directly from POST - update these field names
+        staff_id = request.POST.get('staff_id', '')
+        designation = request.POST.get('designation', '')
+        office_location = request.POST.get('office_location', '')  # Changed from 'office'
+        office_hours = request.POST.get('office_hours', '')        # Added this
+        phone_extension = request.POST.get('phone_extension', '')  # Changed from 'phone'
         faculty_id = request.POST.get('faculty')
         department_id = request.POST.get('department')
+        is_department_head = request.POST.get('is_department_head') == 'on'  # Added this
         
         try:
             # Update lecturer profile
             lecturer_profile = LecturerProfile.objects.get(user=user)
             
-            # Get staff_id and designation from registration
-            staff_id = request.session.get('staff_id') or ''
-            designation = request.session.get('designation') or 'Lecturer'
-            
+            # Update fields with correct names
             if staff_id:
                 lecturer_profile.staff_id = staff_id
             if designation:
                 lecturer_profile.designation = designation
-            
-            lecturer_profile.phone = phone
-            lecturer_profile.office = office
-            lecturer_profile.bio = bio
+                
+            lecturer_profile.office_location = office_location      # Changed
+            lecturer_profile.office_hours = office_hours            # Added
+            lecturer_profile.phone_extension = phone_extension      # Changed
+            lecturer_profile.is_department_head = is_department_head # Added
             
             # Set faculty and department if provided
             if faculty_id:
@@ -225,14 +226,10 @@ def complete_lecturer_profile(request):
             user.save()
             
             # Clear session data
-            if 'new_user_id' in request.session:
-                del request.session['new_user_id']
-            if 'user_type' in request.session:
-                del request.session['user_type']
-            if 'staff_id' in request.session:
-                del request.session['staff_id']
-            if 'designation' in request.session:
-                del request.session['designation']
+            session_keys = ['new_user_id', 'user_type', 'staff_id', 'designation']
+            for key in session_keys:
+                if key in request.session:
+                    del request.session[key]
             
             # Auto-login and redirect
             login(request, user)

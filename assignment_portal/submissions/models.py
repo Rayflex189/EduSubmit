@@ -105,6 +105,7 @@ class LecturerProfile(models.Model):
     faculty = models.ForeignKey(Faculty, on_delete=models.SET_NULL, null=True, related_name='lecturers')
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='lecturers')
     designation = models.CharField(max_length=100)
+    bio = models.TextField(blank=True)  # Add this line
     office_location = models.CharField(max_length=100, blank=True)
     office_hours = models.TextField(blank=True)
     phone_extension = models.CharField(max_length=10, blank=True)

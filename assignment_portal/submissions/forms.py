@@ -226,51 +226,76 @@ class StudentProfileForm(forms.ModelForm):
                 self.fields['department'].queryset = Department.objects.filter(faculty_id=faculty_id)
             except (ValueError, TypeError):
                 pass
-
-
+                
 class LecturerProfileForm(forms.ModelForm):
     faculty = forms.ModelChoiceField(
         queryset=Faculty.objects.all(),
         required=True,
         empty_label="Select Faculty",
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_faculty'
+        })
     )
     
     department = forms.ModelChoiceField(
         queryset=Department.objects.all(),
         required=True,
         empty_label="Select Department",
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_department'
+        })
     )
     
     class Meta:
         model = LecturerProfile
-        fields = ['staff_id', 'faculty', 'department', 'designation', 
-                 'office', 'phone', 'bio']
+        fields = [
+            'staff_id', 
+            'faculty', 
+            'department', 
+            'designation', 
+            'office_location',  # Changed from 'office'
+            'office_hours',      # You might want to add this too
+            'phone_extension',   # Changed from 'phone'
+            'is_department_head'
+        ]
         widgets = {
             'staff_id': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'Staff ID'
+                'placeholder': 'Enter staff ID'
             }),
             'designation': forms.TextInput(attrs={
                 'class': 'form-input',
-                'placeholder': 'e.g., Professor, Lecturer'
+                'placeholder': 'e.g., Senior Lecturer, Professor'
             }),
-            'office': forms.TextInput(attrs={
+            'office_location': forms.TextInput(attrs={  # Changed from 'office'
                 'class': 'form-input',
                 'placeholder': 'Office location'
             }),
-            'phone': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Phone number'
-            }),
-            'bio': forms.Textarea(attrs={
+            'office_hours': forms.Textarea(attrs={      # Added this
                 'class': 'form-textarea',
-                'placeholder': 'Brief bio',
-                'rows': 4
+                'placeholder': 'e.g., Monday 10am-12pm, Wednesday 2pm-4pm',
+                'rows': 3
+            }),
+            'phone_extension': forms.TextInput(attrs={  # Changed from 'phone'
+                'class': 'form-input',
+                'placeholder': 'Phone extension'
+            }),
+            'is_department_head': forms.CheckboxInput(attrs={
+                'class': 'form-checkbox'
             }),
         }
-
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter departments based on selected faculty
+        if 'faculty' in self.data:
+            try:
+                faculty_id = int(self.data.get('faculty'))
+                self.fields['department'].queryset = Department.objects.filter(faculty_id=faculty_id)
+            except (ValueError, TypeError):
+                pass
 
 class AssignmentForm(forms.ModelForm):
     class Meta:
