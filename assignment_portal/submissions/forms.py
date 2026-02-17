@@ -203,7 +203,7 @@ class StudentProfileForm(forms.ModelForm):
     
     class Meta:
         model = StudentProfile
-        fields = ['faculty', 'department', 'level', 'admission_year', 'phone']
+        fields = ['faculty', 'department', 'level', 'admission_year', 'phone_number']  # Changed from 'phone' to 'phone_number'
         widgets = {
             'admission_year': forms.NumberInput(attrs={
                 'class': 'form-input',
@@ -211,7 +211,7 @@ class StudentProfileForm(forms.ModelForm):
                 'min': '2000',
                 'max': '{% now "Y" %}'
             }),
-            'phone': forms.TextInput(attrs={
+            'phone_number': forms.TextInput(attrs={  # Changed from 'phone' to 'phone_number'
                 'class': 'form-input',
                 'placeholder': 'Phone number'
             }),
