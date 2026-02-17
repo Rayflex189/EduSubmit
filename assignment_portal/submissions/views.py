@@ -12,7 +12,7 @@ from .forms import (
 )
 from .models import (
     UserProfile, StudentProfile, LecturerProfile, 
-    Assignment, Course, Faculty, Department
+    Assignment, Course, Faculty, Department, Level
 )
 
 # ---------- Utility Functions ----------
@@ -172,7 +172,7 @@ def complete_student_profile(request):
     }
     
     return render(request, 'submissions/complete_student_profile.html', context)
-    
+
 def complete_lecturer_profile(request):
     user_id = request.session.get('new_user_id')
     if not user_id:
@@ -319,7 +319,7 @@ def student_dashboard(request):
         'submission_rate': round(submission_rate),
     }
     
-    return render(request, 'student_dashboard.html', context)
+    return render(request, 'submissions/student_dashboard.html', context)
     
 @login_required
 @user_passes_test(is_student)
