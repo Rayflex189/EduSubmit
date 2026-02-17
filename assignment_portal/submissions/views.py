@@ -98,80 +98,74 @@ def login_view(request):
     
     return render(request, 'submissions/login.html')
 
+
+    # In your register view
 def register(request):
+    if request.user.is_authenticated:
+        # Redirect based on user type
+        if hasattr(request.user, 'student_profile'):
+            return redirect('student_dashboard')
+        elif hasattr(request.user, 'lecturer_profile'):
+            return redirect('lecturer_dashboard')
+        return redirect('dashboard')
+    
     if request.method == 'POST':
-        user_form = UserRegistrationForm(request.POST)
-        user_type = request.POST.get('user_type', 'student')
+        # Use the form for validation
+        form = UserRegistrationForm(request.POST)
         
-        if user_form.is_valid():
-            # Create user
-            user = user_form.save(commit=False)
-            user.user_type = user_type
-            user.username = user_form.cleaned_data.get('email')  # Use email as username
-            user.save()
+        if form.is_valid():
+            # Save user and create profile
+            user = form.save()
             
-            # Create appropriate profile based on user type
-            if user_type == 'student':
-                # Redirect to complete student profile
+            if user.user_type == 'student':
+                # Store user ID in session for profile completion
                 request.session['new_user_id'] = user.id
-                request.session['user_type'] = 'student'
-                return redirect('submissions/complete_student_profile')
+                messages.success(request, 'Student account created! Please complete your profile.')
+                return redirect('complete_student_profile')
             
-            elif user_type == 'lecturer':
-                # Create lecturer profile
-                lecturer_profile = LecturerProfile.objects.create(
-                    user=user,
-                    staff_id=request.POST.get('staff_id'),
-                    designation=request.POST.get('designation', 'Lecturer')
-                )
-                user.is_staff = True  # Make lecturer a staff member
-                user.save()
-                
-                # Auto-login and redirect
+            elif user.user_type == 'lecturer':
+                # Auto-login lecturer
                 login(request, user)
-                messages.success(request, f'Welcome, {user.full_name}! Your lecturer account has been created.')
+                messages.success(request, f'Welcome, {user.full_name or user.username}! Your lecturer account has been created.')
                 return redirect('lecturer_dashboard')
         
         else:
             # Show form errors
-            for field, errors in user_form.errors.items():
+            for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
-    
     else:
-        user_form = UserRegistrationForm()
+        form = UserRegistrationForm()
     
-    return render(request, 'registration/register.html', {'form': user_form})
+    return render(request, 'registration/register.html', {'form': form})
 
+
+# In your complete_student_profile view
 def complete_student_profile(request):
     user_id = request.session.get('new_user_id')
     if not user_id:
-        return redirect('registrationk,,/register')
+        return redirect('register')
     
     user = get_object_or_404(UserProfile, id=user_id)
     
     if request.method == 'POST':
-        profile_form = StudentProfileForm(request.POST)
-        if profile_form.is_valid():
-            student_profile = profile_form.save(commit=False)
-            student_profile.user = user
-            student_profile.matric_number = user_form.cleaned_data.get('matric_number')  # From registration
-            student_profile.save()
+        form = StudentProfileForm(request.POST, instance=user.student_profile)
+        if form.is_valid():
+            form.save()
             
             # Clear session
             del request.session['new_user_id']
-            del request.session['user_type']
             
             # Auto-login and redirect
             login(request, user)
-            messages.success(request, f'Welcome, {user.full_name}! Your student profile is now complete.')
+            messages.success(request, f'Welcome, {user.full_name or user.username}! Your student profile is now complete.')
             return redirect('student_dashboard')
     else:
-        profile_form = StudentProfileForm()
+        form = StudentProfileForm(instance=user.student_profile)
     
     context = {
         'user': user,
-        'form': profile_form,
+        'form': form,
         'faculties': Faculty.objects.all(),
         'departments': Department.objects.all(),
         'levels': Level.objects.all()
@@ -179,31 +173,91 @@ def complete_student_profile(request):
     
     return render(request, 'submissions/complete_student_profile.html', context)
 
-
-def complete_lecturer_profile(request, user_id):
+def complete_lecturer_profile(request):
+    user_id = request.session.get('new_user_id')
+    if not user_id:
+        return redirect('register')
+    
     user = get_object_or_404(UserProfile, id=user_id)
     
     if request.method == 'POST':
-        profile_form = LecturerProfileForm(request.POST)
-        if profile_form.is_valid():
-            lecturer_profile = profile_form.save(commit=False)
-            lecturer_profile.user = user
+        # Get form data directly from POST
+        phone = request.POST.get('phone', '')
+        office = request.POST.get('office', '')
+        bio = request.POST.get('bio', '')
+        faculty_id = request.POST.get('faculty')
+        department_id = request.POST.get('department')
+        
+        try:
+            # Update lecturer profile
+            lecturer_profile = LecturerProfile.objects.get(user=user)
+            
+            # Get staff_id and designation from registration
+            staff_id = request.session.get('staff_id') or ''
+            designation = request.session.get('designation') or 'Lecturer'
+            
+            if staff_id:
+                lecturer_profile.staff_id = staff_id
+            if designation:
+                lecturer_profile.designation = designation
+            
+            lecturer_profile.phone = phone
+            lecturer_profile.office = office
+            lecturer_profile.bio = bio
+            
+            # Set faculty and department if provided
+            if faculty_id:
+                try:
+                    lecturer_profile.faculty = Faculty.objects.get(id=faculty_id)
+                except Faculty.DoesNotExist:
+                    pass
+            
+            if department_id:
+                try:
+                    lecturer_profile.department = Department.objects.get(id=department_id)
+                except Department.DoesNotExist:
+                    pass
+            
             lecturer_profile.save()
             
-            # Make user staff and save
+            # Make user staff
             user.is_staff = True
             user.save()
             
-            # Authenticate and login
+            # Clear session data
+            if 'new_user_id' in request.session:
+                del request.session['new_user_id']
+            if 'user_type' in request.session:
+                del request.session['user_type']
+            if 'staff_id' in request.session:
+                del request.session['staff_id']
+            if 'designation' in request.session:
+                del request.session['designation']
+            
+            # Auto-login and redirect
             login(request, user)
+            messages.success(request, f'Welcome, {user.full_name or user.username}! Your lecturer profile is now complete.')
             return redirect('lecturer_dashboard')
-    else:
-        profile_form = LecturerProfileForm()
+            
+        except LecturerProfile.DoesNotExist:
+            messages.error(request, 'Lecturer profile not found.')
+            return redirect('register')
+        except Exception as e:
+            messages.error(request, f'Error completing profile: {str(e)}')
+            return redirect('complete_lecturer_profile')
     
-    return render(request, 'submissions/complete_lecturer_profile.html', {
-        'form': profile_form,
-        'user': user
-    })
+    else:
+        # GET request - show form
+        faculties = Faculty.objects.all()
+        departments = Department.objects.all()
+        
+        context = {
+            'user': user,
+            'faculties': faculties,
+            'departments': departments,
+        }
+        
+        return render(request, 'submissions/complete_lecturer_profile.html', context)
 
 @login_required
 @user_passes_test(is_student)
