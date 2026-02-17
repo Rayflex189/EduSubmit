@@ -106,6 +106,45 @@
                             <p class="mt-1 text-xs text-gray-500">Use your official university student ID</p>
                         </div>
 
+                        <!-- In your student registration form, add these fields after matric_number -->
+<div>
+    <label for="student_admission_year" class="block text-sm font-medium text-gray-700 mb-1">
+        <i class="fas fa-calendar-alt mr-1"></i>
+        Admission Year
+    </label>
+    <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-calendar text-gray-400"></i>
+        </div>
+        <input type="number" 
+               name="admission_year" 
+               id="student_admission_year"
+               class="pl-10 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors"
+               placeholder="e.g., 2023"
+               min="2000"
+               max="2026"
+               required>
+    </div>
+</div>
+
+<!-- Phone number field -->
+<div>
+    <label for="student_phone_number" class="block text-sm font-medium text-gray-700 mb-1">
+        <i class="fas fa-phone mr-1"></i>
+        Phone Number
+    </label>
+    <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-phone-alt text-gray-400"></i>
+        </div>
+        <input type="tel" 
+               name="phone_number" 
+               id="student_phone_number"
+               class="pl-10 block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors"
+               placeholder="Phone number (optional)">
+    </div>
+</div>
+
                         <!-- Username -->
 <div>
     <label for="lecturer_username" class="block text-sm font-medium text-gray-700 mb-1">
@@ -514,6 +553,26 @@
             btn.classList.add('border-gray-200');
         });
     }
+
+    // Update the student validation function
+function validateStudentForm() {
+    const form = document.getElementById('studentRegistrationForm');
+    let isValid = true;
+    
+    // ... existing validation ...
+    
+    // Validate admission year
+    const admissionYear = document.getElementById('student_admission_year');
+    if (admissionYear && !admissionYear.value) {
+        showFieldError(admissionYear, 'Admission year is required');
+        isValid = false;
+    } else if (admissionYear && (admissionYear.value < 2000 || admissionYear.value > 2026)) {
+        showFieldError(admissionYear, 'Please enter a valid year between 2000 and 2026');
+        isValid = false;
+    }
+    
+    return isValid;
+}
     
     // Password toggle function
     function togglePassword(fieldId) {

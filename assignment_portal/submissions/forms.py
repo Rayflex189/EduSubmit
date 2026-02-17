@@ -7,7 +7,6 @@ from .models import (
     Faculty, Department, Level, Assignment
 )
 
-
 class UserRegistrationForm(UserCreationForm):
     USER_TYPE_CHOICES = [
         ('student', 'Student'),
@@ -47,6 +46,7 @@ class UserRegistrationForm(UserCreationForm):
         })
     )
     
+    # Student-specific fields
     matric_number = forms.CharField(
         max_length=20,
         required=False,
@@ -56,6 +56,26 @@ class UserRegistrationForm(UserCreationForm):
         })
     )
     
+    admission_year = forms.IntegerField(  # ADD THIS FIELD
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Admission year (e.g., 2023)',
+            'min': '2000',
+            'max': '2026'
+        })
+    )
+    
+    phone_number = forms.CharField(  # ADD THIS FIELD
+        max_length=15,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input',
+            'placeholder': 'Phone number (optional)'
+        })
+    )
+    
+    # Lecturer-specific fields
     staff_id = forms.CharField(
         max_length=20,
         required=False,
@@ -96,10 +116,15 @@ class UserRegistrationForm(UserCreationForm):
         
         if user_type == 'student':
             matric_number = cleaned_data.get('matric_number')
+            admission_year = cleaned_data.get('admission_year')
+            
             if not matric_number:
                 self.add_error('matric_number', 'Matric number is required for students.')
             elif StudentProfile.objects.filter(matric_number=matric_number).exists():
                 self.add_error('matric_number', 'This matric number is already registered.')
+            
+            if not admission_year:  # Validate admission_year is provided
+                self.add_error('admission_year', 'Admission year is required for students.')
         
         elif user_type == 'lecturer':
             staff_id = cleaned_data.get('staff_id')
@@ -126,19 +151,22 @@ class UserRegistrationForm(UserCreationForm):
             if user.user_type == 'student':
                 StudentProfile.objects.create(
                     user=user,
-                    matric_number=self.cleaned_data.get('matric_number', '')
+                    matric_number=self.cleaned_data.get('matric_number', ''),
+                    admission_year=self.cleaned_data.get('admission_year'),  # ADD THIS LINE
+                    phone_number=self.cleaned_data.get('phone_number', '')    # ADD THIS LINE
+                    # Note: faculty, department, level will be set in the complete_profile step
                 )
             elif user.user_type == 'lecturer':
                 LecturerProfile.objects.create(
                     user=user,
                     staff_id=self.cleaned_data.get('staff_id', ''),
                     designation=self.cleaned_data.get('designation', 'Lecturer')
+                    # Note: faculty, department, etc. will be set in the complete_profile step
                 )
                 user.is_staff = True
                 user.save()
         
         return user
-
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -226,7 +254,7 @@ class StudentProfileForm(forms.ModelForm):
                 self.fields['department'].queryset = Department.objects.filter(faculty_id=faculty_id)
             except (ValueError, TypeError):
                 pass
-                
+
 class LecturerProfileForm(forms.ModelForm):
     faculty = forms.ModelChoiceField(
         queryset=Faculty.objects.all(),
