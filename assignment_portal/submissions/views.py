@@ -147,6 +147,11 @@ def complete_student_profile(request):
         return redirect('register')
     
     user = get_object_or_404(UserProfile, id=user_id)
+
+    # Create a list of years
+    current_year = 2024
+    years = [str(year) for year in range(current_year, current_year - 6, -1)]
+
     
     if request.method == 'POST':
         form = StudentProfileForm(request.POST, instance=user.student_profile)
@@ -168,7 +173,8 @@ def complete_student_profile(request):
         'form': form,
         'faculties': Faculty.objects.all(),
         'departments': Department.objects.all(),
-        'levels': Level.objects.all()
+        'levels': Level.objects.all(),
+        'years': years,
     }
     
     return render(request, 'submissions/complete_student_profile.html', context)
