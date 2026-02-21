@@ -633,12 +633,12 @@
         }
         // Ctrl+Shift+V for view all
         if (e.ctrlKey && e.shiftKey && e.key === 'V') {
-            window.location.href = "{% url 'student_assignments' %}";
+            window.location.href = "";
             e.preventDefault();
         }
         // Ctrl+Shift+C for courses
         if (e.ctrlKey && e.shiftKey && e.key === 'C') {
-            window.location.href = "{% url 'student_courses' %}";
+            window.location.href = "";
             e.preventDefault();
         }
     });
