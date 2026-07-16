@@ -3,16 +3,20 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import LoginView
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.utils import timezone
+from django.db.models import Avg, Count, Q
+import csv
 
 from .forms import (
-    UserRegistrationForm, StudentProfileForm, 
-    LecturerProfileForm, AssignmentForm, GradeAssignmentForm, LecturerProfileForm
+    UserRegistrationForm, StudentProfileForm, StudentProfileEditForm,
+    LecturerProfileForm, AssignmentForm, SubmissionForm, GradeAssignmentForm
 )
 from .models import (
     UserProfile, StudentProfile, LecturerProfile, 
-    Assignment, Course, Faculty, Department, Level
+    Assignment, Course, Faculty, Department, Level,
+    AcademicSession, Semester, Submission, Grade, Notification
 )
 
 # ---------- Utility Functions ----------
@@ -38,99 +42,48 @@ class CustomLoginView(LoginView):
         return '/'
     
     def form_valid(self, form):
-        # Custom login logic if needed
         username = form.cleaned_data.get('username')
         password = form.cleaned_data.get('password')
         user = authenticate(self.request, username=username, password=password)
         
         if user is not None:
             login(self.request, user)
-            
-            # Set session timeout based on remember me
             if not self.request.POST.get('remember'):
-                self.request.session.set_expiry(0)  # Browser session
+                self.request.session.set_expiry(0)
             else:
                 self.request.session.set_expiry(1209600)  # 2 weeks
             
             messages.success(self.request, f'Welcome back, {user.full_name}!')
             return redirect(self.get_success_url())
-        
-        return super().form_invalid(form)
+        return super().form_valid(form)
     
     def form_invalid(self, form):
         messages.error(self.request, 'Invalid username or password. Please try again.')
         return super().form_invalid(form)
 
-# Or for function-based view:
-def login_view(request):
-    if request.user.is_authenticated:
-        # Redirect based on user type
-        if hasattr(request.user, 'student_profile'):
-            return redirect('student_dashboard')
-        elif hasattr(request.user, 'lecturer_profile'):
-            return redirect('lecturer_dashboard')
-        return redirect('dashboard')
-    
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            login(request, user)
-            
-            # Set session expiry based on remember me
-            if not request.POST.get('remember'):
-                request.session.set_expiry(0)
-            
-            messages.success(request, f'Welcome back, {user.full_name}!')
-            
-            # Redirect based on user type
-            if hasattr(user, 'student_profile'):
-                return redirect('submissions/student_dashboard')
-            elif hasattr(user, 'lecturer_profile'):
-                return redirect('submissions/lecturer_dashboard')
-            elif user.is_superuser:
-                return redirect('/admin/')
-            return redirect('dashboard')
-        else:
-            messages.error(request, 'Invalid username or password.')
-    
-    return render(request, 'submissions/login.html')
 
-
-    # In your register view
 def register(request):
     if request.user.is_authenticated:
-        # Redirect based on user type
         if hasattr(request.user, 'student_profile'):
             return redirect('student_dashboard')
         elif hasattr(request.user, 'lecturer_profile'):
             return redirect('lecturer_dashboard')
-        return redirect('dashboard')
+        return redirect('/admin/')
     
     if request.method == 'POST':
-        # Use the form for validation
         form = UserRegistrationForm(request.POST)
-        
         if form.is_valid():
-            # Save user and create profile
             user = form.save()
-            
             if user.user_type == 'student':
-                # Store user ID in session for profile completion
                 request.session['new_user_id'] = user.id
                 messages.success(request, 'Student account created! Please complete your profile.')
                 return redirect('complete_student_profile')
-            
             elif user.user_type == 'lecturer':
-                # Auto-login lecturer
-                login(request, user)
-                messages.success(request, f'Welcome, {user.full_name or user.username}! Your lecturer account has been created.')
-                return redirect('lecturer_dashboard')
-        
+                # Auto-login lecturer and complete profile
+                request.session['new_user_id'] = user.id
+                messages.success(request, 'Lecturer account created! Please complete your profile.')
+                return redirect('complete_lecturer_profile')
         else:
-            # Show form errors
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field}: {error}")
@@ -140,30 +93,22 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 
-# In your complete_student_profile view
 def complete_student_profile(request):
     user_id = request.session.get('new_user_id')
     if not user_id:
         return redirect('register')
     
     user = get_object_or_404(UserProfile, id=user_id)
-
-    # Create a list of years
-    current_year = 2024
+    current_year = timezone.now().year
     years = [str(year) for year in range(current_year, current_year - 6, -1)]
-
     
     if request.method == 'POST':
         form = StudentProfileForm(request.POST, instance=user.student_profile)
         if form.is_valid():
             form.save()
-            
-            # Clear session
             del request.session['new_user_id']
-            
-            # Auto-login and redirect
             login(request, user)
-            messages.success(request, f'Welcome, {user.full_name or user.username}! Your student profile is now complete.')
+            messages.success(request, f'Welcome, {user.full_name}! Your profile is complete.')
             return redirect('student_dashboard')
     else:
         form = StudentProfileForm(instance=user.student_profile)
@@ -176,8 +121,8 @@ def complete_student_profile(request):
         'levels': Level.objects.all(),
         'years': years,
     }
-    
     return render(request, 'submissions/complete_student_profile.html', context)
+
 
 def complete_lecturer_profile(request):
     user_id = request.session.get('new_user_id')
@@ -187,220 +132,155 @@ def complete_lecturer_profile(request):
     user = get_object_or_404(UserProfile, id=user_id)
     
     if request.method == 'POST':
-        # Get form data directly from POST - update these field names
-        staff_id = request.POST.get('staff_id', '')
-        designation = request.POST.get('designation', '')
-        office_location = request.POST.get('office_location', '')  # Changed from 'office'
-        office_hours = request.POST.get('office_hours', '')        # Added this
-        phone_extension = request.POST.get('phone_extension', '')  # Changed from 'phone'
-        faculty_id = request.POST.get('faculty')
-        department_id = request.POST.get('department')
-        is_department_head = request.POST.get('is_department_head') == 'on'  # Added this
-        
-        try:
-            # Update lecturer profile
-            lecturer_profile = LecturerProfile.objects.get(user=user)
-            
-            # Update fields with correct names
-            if staff_id:
-                lecturer_profile.staff_id = staff_id
-            if designation:
-                lecturer_profile.designation = designation
-                
-            lecturer_profile.office_location = office_location      # Changed
-            lecturer_profile.office_hours = office_hours            # Added
-            lecturer_profile.phone_extension = phone_extension      # Changed
-            lecturer_profile.is_department_head = is_department_head # Added
-            
-            # Set faculty and department if provided
-            if faculty_id:
-                try:
-                    lecturer_profile.faculty = Faculty.objects.get(id=faculty_id)
-                except Faculty.DoesNotExist:
-                    pass
-            
-            if department_id:
-                try:
-                    lecturer_profile.department = Department.objects.get(id=department_id)
-                except Department.DoesNotExist:
-                    pass
-            
-            lecturer_profile.save()
-            
-            # Make user staff
+        form = LecturerProfileForm(request.POST, instance=user.lecturer_profile)
+        if form.is_valid():
+            form.save()
             user.is_staff = True
             user.save()
-            
-            # Clear session data
-            session_keys = ['new_user_id', 'user_type', 'staff_id', 'designation']
-            for key in session_keys:
-                if key in request.session:
-                    del request.session[key]
-            
-            # Auto-login and redirect
+            del request.session['new_user_id']
             login(request, user)
-            messages.success(request, f'Welcome, {user.full_name or user.username}! Your lecturer profile is now complete.')
+            messages.success(request, f'Welcome, {user.full_name}! Your profile is complete.')
             return redirect('lecturer_dashboard')
-            
-        except LecturerProfile.DoesNotExist:
-            messages.error(request, 'Lecturer profile not found.')
-            return redirect('register')
-        except Exception as e:
-            messages.error(request, f'Error completing profile: {str(e)}')
-            return redirect('complete_lecturer_profile')
-    
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
     else:
-        # GET request - show form
-        faculties = Faculty.objects.all()
-        departments = Department.objects.all()
+        form = LecturerProfileForm(instance=user.lecturer_profile)
         
-        context = {
-            'user': user,
-            'faculties': faculties,
-            'departments': departments,
-        }
-        
-        return render(request, 'submissions/complete_lecturer_profile.html', context)
+    context = {
+        'user': user,
+        'form': form,
+        'faculties': Faculty.objects.all(),
+        'departments': Department.objects.all(),
+    }
+    return render(request, 'submissions/complete_lecturer_profile.html', context)
 
+
+# ---------- Student Views ----------
 @login_required
 @user_passes_test(is_student)
 def student_dashboard(request):
     student = request.user.student_profile
     
-    # Get student's assignments
-    assignments = Assignment.objects.filter(
-        student=student
-    ).select_related('course', 'course__lecturer__user')
-    
-    # Get student's current courses
+    # Enrolled active courses
     current_courses = Course.objects.filter(
         department=student.department,
         level=student.level,
         is_active=True
     ).select_related('lecturer__user')
     
-    # Calculate statistics
-    total_assignments = assignments.count()
-    graded_assignments = assignments.filter(status='graded').count()
-    pending_assignments = assignments.filter(status__in=['pending', 'under_review']).count()
-    total_courses = current_courses.count()
+    # Submissions
+    submissions = Submission.objects.filter(
+        student=student
+    ).select_related('assignment__course', 'grade_record')
     
-    # Calculate completion percentage
-    completed_courses = current_courses.filter(
-        assignments__student=student,
-        assignments__status='graded'
-    ).distinct().count()
-    completion_percentage = (completed_courses / total_courses * 100) if total_courses > 0 else 0
+    total_submissions = submissions.count()
+    graded_submissions = submissions.filter(status='graded')
+    graded_count = graded_submissions.count()
+    pending_count = submissions.filter(status__in=['pending', 'under_review']).count()
     
-    # Calculate average grade
-    graded_scores = assignments.filter(score__isnull=False).values_list('score', flat=True)
-    average_grade = round(sum(graded_scores) / len(graded_scores), 1) if graded_scores else 'N/A'
+    # Average Score
+    scores = [s.grade_record.score for s in graded_submissions if hasattr(s, 'grade_record') and s.grade_record]
+    average_score = round(sum(scores) / len(scores), 1) if scores else 'N/A'
     
-    # Calculate submission rate
-    total_possible_assignments = sum(course.assignments.count() for course in current_courses)
-    submission_rate = (total_assignments / total_possible_assignments * 100) if total_possible_assignments > 0 else 0
+    # Completion Rate
+    total_assignments_avail = Assignment.objects.filter(
+        course__in=current_courses,
+        session__is_active=True
+    ).count()
+    completion_percentage = (total_submissions / total_assignments_avail * 100) if total_assignments_avail > 0 else 0
     
-    # Get recent assignments (last 5)
-    recent_assignments = assignments.order_by('-date_uploaded')[:5]
-    
-    # Prepare performance data
-    performance_data = {
-        'average_grade': average_grade,
-        'submission_rate': round(submission_rate),
-        'pending_work': pending_assignments,
-    }
+    recent_submissions = submissions.order_by('-date_uploaded')[:5]
     
     context = {
         'student': student,
-        'assignments': assignments,
-        'recent_assignments': recent_assignments,
         'courses': current_courses,
-        'total_assignments': total_assignments,
-        'graded_assignments': graded_assignments,
-        'pending_assignments': pending_assignments,
-        'total_courses': total_courses,
+        'total_assignments': total_submissions,
+        'graded_assignments': graded_count,
+        'pending_assignments': pending_count,
+        'total_courses': current_courses.count(),
         'completion_percentage': round(completion_percentage),
-        'performance_data': performance_data,
-        'average_grade': average_grade,
-        'submission_rate': round(submission_rate),
+        'average_grade': average_score,
+        'recent_assignments': recent_submissions,
     }
-    
     return render(request, 'submissions/student_dashboard.html', context)
-    
+
+
 @login_required
 @user_passes_test(is_student)
 def upload_assignment(request):
     student = request.user.student_profile
     
-    # Get student's current courses
+    # Get active courses for student
     current_courses = Course.objects.filter(
         department=student.department,
         level=student.level,
         is_active=True
-    ).select_related('lecturer__user')
+    )
+    # Active assignments for those courses
+    assignments = Assignment.objects.filter(
+        course__in=current_courses,
+        session__is_active=True,
+        semester__is_active=True
+    ).select_related('course')
     
-    # Get recent uploads
-    recent_uploads = Assignment.objects.filter(
-        student=student
-    ).select_related('course').order_by('-date_uploaded')[:5]
-    
+    assignment_id = request.GET.get('assignment_id')
+    selected_assignment = None
+    if assignment_id:
+        selected_assignment = get_object_or_404(Assignment, id=assignment_id, course__in=current_courses)
+        
     if request.method == 'POST':
-        form = AssignmentForm(request.POST, request.FILES)
+        form = SubmissionForm(request.POST, request.FILES)
+        target_assignment_id = request.POST.get('assignment')
+        
+        target_assignment = get_object_or_404(Assignment, id=target_assignment_id, course__in=current_courses)
         
         if form.is_valid():
-            assignment = form.save(commit=False)
-            assignment.student = student
-            
-            # Get selected course
-            course_id = request.POST.get('course')
-            if course_id:
-                try:
-                    course = Course.objects.get(id=course_id)
-                    assignment.course = course
-                except Course.DoesNotExist:
-                    messages.error(request, 'Invalid course selected.')
-                    return redirect('upload_assignment')
-            
-            # Set additional fields
-            assignment.status = 'pending'
-            assignment.date_uploaded = timezone.now()
-            
-            assignment.save()
-            
-            # Create notification for lecturer
-            messages.success(
-                request, 
-                f'Assignment "{assignment.title}" uploaded successfully!'
+            submission, created = Submission.objects.get_or_create(
+                assignment=target_assignment,
+                student=student,
+                defaults={'file': form.cleaned_data['file']}
             )
-            
-            # Clear any saved draft
-            if 'assignment_draft' in request.session:
-                del request.session['assignment_draft']
-            
+            if not created:
+                submission.file = form.cleaned_data['file']
+                submission.status = 'pending'
+                submission.save()
+                
+            # Create notification for lecturer
+            if target_assignment.course.lecturer:
+                Notification.objects.create(
+                    recipient=target_assignment.course.lecturer.user,
+                    sender=request.user,
+                    message=f'New assignment upload: "{target_assignment.title}" by {student.user.full_name}.',
+                    link='/lecturer/assignments/'
+                )
+                
+            messages.success(request, f'Submission for "{target_assignment.title}" uploaded successfully!')
             return redirect('student_dashboard')
-        else:
-            messages.error(request, 'Please correct the errors below.')
     else:
-        form = AssignmentForm()
-    
+        form = SubmissionForm()
+        
     context = {
         'student': student,
         'courses': current_courses,
-        'recent_uploads': recent_uploads,
+        'assignments': assignments,
+        'selected_assignment': selected_assignment,
         'form': form,
     }
-    
-    return render(request, 'upload_assignment.html', context)
+    return render(request, 'submissions/upload_assignment.html', context)
 
 
 @login_required
 @user_passes_test(is_student)
 def student_assignments(request):
     student = request.user.student_profile
-    assignments = Assignment.objects.filter(student=student).order_by('-date_uploaded')
+    submissions = Submission.objects.filter(student=student).select_related(
+        'assignment', 'assignment__course', 'grade_record'
+    ).order_by('-date_uploaded')
     
     return render(request, 'submissions/student_assignments.html', {
-        'assignments': assignments,
+        'submissions': submissions,
         'student': student
     })
 
@@ -409,68 +289,49 @@ def student_assignments(request):
 @user_passes_test(is_student)
 def student_profile(request):
     student = request.user.student_profile
-    
     if request.method == 'POST':
-        # Handle profile updates here
-        pass
-    
+        form = StudentProfileEditForm(request.POST, instance=student)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('student_profile')
+    else:
+        form = StudentProfileEditForm(instance=student)
+        
     return render(request, 'submissions/student_profile.html', {
-        'student': student
+        'student': student,
+        'form': form
     })
 
 
-# ---------- Lecturer Views ----------
+# ---------- Lecturer & Admin Views ----------
 @login_required
 @user_passes_test(is_lecturer)
 def lecturer_dashboard(request):
     lecturer = request.user.lecturer_profile
+    courses = Course.objects.filter(lecturer=lecturer)
+    assignments = Assignment.objects.filter(course__in=courses)
+    submissions = Submission.objects.filter(assignment__in=assignments).select_related('student__user', 'assignment__course', 'grade_record')
     
-    # Get lecturer's courses
-    courses = Course.objects.filter(lecturer=lecturer).prefetch_related('students')
-    
-    # Get assignments for lecturer's courses
-    assignments = Assignment.objects.filter(
-        course__lecturer=lecturer
-    ).select_related('student__user', 'course', 'graded_by__user')
-    
-    # Calculate statistics
     total_assignments = assignments.count()
-    graded_assignments = assignments.filter(status='graded').count()
-    pending_assignments = assignments.filter(status__in=['pending', 'under_review']).count()
+    total_submissions = submissions.count()
+    graded_submissions = submissions.filter(status='graded').count()
+    pending_submissions = submissions.filter(status__in=['pending', 'under_review']).count()
     total_courses = courses.count()
     
-    # Get recent assignments (last 10)
-    recent_assignments = assignments.order_by('-date_uploaded')[:10]
-    
-    # Get assignments with upcoming deadlines (within next 7 days)
-    from datetime import datetime, timedelta
-    next_week = datetime.now() + timedelta(days=7)
-    upcoming_deadlines = assignments.filter(
-        deadline__isnull=False,
-        deadline__gte=datetime.now(),
-        deadline__lte=next_week
-    ).order_by('deadline')[:5]
-    
-    # Calculate course student counts
-    for course in courses:
-        course.student_count = StudentProfile.objects.filter(
-            department=course.department,
-            level=course.level
-        ).count()
+    recent_submissions = submissions.order_by('-date_uploaded')[:10]
     
     context = {
         'lecturer': lecturer,
         'courses': courses,
-        'assignments': assignments,
-        'recent_assignments': recent_assignments,
-        'upcoming_deadlines': upcoming_deadlines,
         'total_assignments': total_assignments,
-        'graded_assignments': graded_assignments,
-        'pending_assignments': pending_assignments,
+        'total_submissions': total_submissions,
+        'graded_assignments': graded_submissions,
+        'pending_assignments': pending_submissions,
         'total_courses': total_courses,
+        'recent_submissions': recent_submissions,
     }
-    
-    return render(request, 'lecturer_dashboard.html', context)
+    return render(request, 'submissions/admin_dashboard.html', context)
 
 
 @login_required
@@ -479,15 +340,16 @@ def lecturer_assignments(request):
     lecturer = request.user.lecturer_profile
     status_filter = request.GET.get('status', 'all')
     
-    assignments = Assignment.objects.filter(course__lecturer=lecturer)
+    courses = Course.objects.filter(lecturer=lecturer)
+    submissions = Submission.objects.filter(assignment__course__in=courses)
     
     if status_filter != 'all':
-        assignments = assignments.filter(status=status_filter)
-    
-    assignments = assignments.select_related('student', 'course').order_by('-date_uploaded')
+        submissions = submissions.filter(status=status_filter)
+        
+    submissions = submissions.select_related('student__user', 'assignment', 'assignment__course', 'grade_record').order_by('-date_uploaded')
     
     return render(request, 'submissions/lecturer_assignments.html', {
-        'assignments': assignments,
+        'submissions': submissions,
         'lecturer': lecturer,
         'status_filter': status_filter
     })
@@ -495,60 +357,84 @@ def lecturer_assignments(request):
 
 @login_required
 @user_passes_test(is_lecturer)
-def grade_assignment(request, assignment_id):
+def create_assignment(request):
     lecturer = request.user.lecturer_profile
-    
-    # Get the assignment, ensuring it belongs to lecturer's courses
-    assignment = get_object_or_404(
-        Assignment,
-        id=assignment_id,
-        course__lecturer=lecturer
-    )
-    
-    # Get status choices for template
-    assignment_status_choices = Assignment._meta.get_field('status').choices
-    
     if request.method == 'POST':
-        grade = request.POST.get('grade', '').strip()
-        score = request.POST.get('score', '').strip()
-        feedback = request.POST.get('feedback', '').strip()
-        status = request.POST.get('status', 'graded')
-        
-        if grade:
-            # Update assignment
-            assignment.grade = grade.upper()
-            assignment.feedback = feedback
-            assignment.status = status
-            assignment.graded_by = lecturer
-            assignment.graded_date = timezone.now()
-            
-            # Parse score if provided
-            if score:
-                try:
-                    assignment.score = float(score)
-                except ValueError:
-                    assignment.score = None
-            
+        form = AssignmentForm(request.POST, request.FILES, lecturer=lecturer)
+        if form.is_valid():
+            assignment = form.save(commit=False)
+            assignment.created_by = lecturer
             assignment.save()
             
+            # Send notifications to students in that course
+            students = StudentProfile.objects.filter(
+                department=assignment.course.department,
+                level=assignment.course.level
+            )
+            for student in students:
+                Notification.objects.create(
+                    recipient=student.user,
+                    sender=request.user,
+                    message=f'New assignment published: "{assignment.title}" in {assignment.course.code}.',
+                    link='/student/dashboard/'
+                )
+                
+            messages.success(request, f'Assignment "{assignment.title}" published successfully!')
+            return redirect('lecturer_dashboard')
+    else:
+        form = AssignmentForm(lecturer=lecturer)
+        
+    return render(request, 'submissions/create_assignment.html', {
+        'form': form,
+        'lecturer': lecturer
+    })
+
+
+@login_required
+@user_passes_test(is_lecturer)
+def grade_assignment(request, assignment_id):
+    # Parameter is named assignment_id in urls.py, but it maps to Submission ID
+    lecturer = request.user.lecturer_profile
+    submission = get_object_or_404(
+        Submission,
+        id=assignment_id,
+        assignment__course__lecturer=lecturer
+    )
+    
+    grade_instance = getattr(submission, 'grade_record', None)
+    
+    if request.method == 'POST':
+        form = GradeAssignmentForm(request.POST, instance=grade_instance)
+        if form.is_valid():
+            grade_obj = form.save(commit=False)
+            grade_obj.submission = submission
+            grade_obj.graded_by = lecturer
+            grade_obj.save()
+            
+            status = form.cleaned_data.get('status', 'graded')
+            submission.status = status
+            submission.save()
+            
             # Create notification for student
-            messages.success(
-                request, 
-                f'Grade submitted successfully for {assignment.student.user.full_name}!'
+            Notification.objects.create(
+                recipient=submission.student.user,
+                sender=request.user,
+                message=f'Your submission for "{submission.assignment.title}" has been graded ({grade_obj.grade}).',
+                link='/student/assignments/'
             )
             
-            # Redirect back to assignments list
+            messages.success(request, f'Grade submitted successfully for {submission.student.user.full_name}!')
             return redirect('lecturer_assignments')
-        else:
-            messages.error(request, 'Please enter a grade.')
-    
+    else:
+        initial_status = submission.status
+        form = GradeAssignmentForm(instance=grade_instance, initial={'status': initial_status})
+        
     context = {
-        'assignment': assignment,
-        'assignment_status_choices': assignment_status_choices,
+        'submission': submission,
+        'form': form,
         'lecturer': lecturer,
     }
-    
-    return render(request, 'grade_assignment.html', context)
+    return render(request, 'submissions/grade_assignment.html', context)
 
 
 @login_required
@@ -567,11 +453,9 @@ def lecturer_courses(request):
 @user_passes_test(is_lecturer)
 def lecturer_students(request):
     lecturer = request.user.lecturer_profile
-    # Get students from lecturer's courses
-    courses = Course.objects.filter(lecturer=lecturer)
     students = StudentProfile.objects.filter(
         department=lecturer.department
-    ).distinct()
+    ).select_related('user', 'level').distinct()
     
     return render(request, 'submissions/lecturer_students.html', {
         'students': students,
@@ -579,13 +463,115 @@ def lecturer_students(request):
     })
 
 
-# ---------- API Views ----------
+# ---------- Global Search ----------
+@login_required
+def global_search(request):
+    query = request.GET.get('q', '').strip()
+    results = {
+        'students': [],
+        'courses': [],
+        'assignments': [],
+        'departments': [],
+        'lecturers': [],
+    }
+    
+    if query:
+        results['students'] = StudentProfile.objects.filter(
+            Q(user__full_name__icontains=query) |
+            Q(matric_number__icontains=query) |
+            Q(user__email__icontains=query)
+        ).select_related('user', 'department', 'level')[:10]
+        
+        results['courses'] = Course.objects.filter(
+            Q(code__icontains=query) |
+            Q(title__icontains=query)
+        ).select_related('department', 'lecturer__user')[:10]
+        
+        results['assignments'] = Assignment.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        ).select_related('course')[:10]
+        
+        results['departments'] = Department.objects.filter(
+            Q(name__icontains=query) |
+            Q(code__icontains=query)
+        )[:10]
+        
+        results['lecturers'] = LecturerProfile.objects.filter(
+            Q(user__full_name__icontains=query) |
+            Q(staff_id__icontains=query) |
+            Q(designation__icontains=query)
+        ).select_related('user', 'department')[:10]
+        
+    return render(request, 'submissions/search_results.html', {
+        'query': query,
+        'results': results
+    })
+
+
+# ---------- Reports ----------
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
+def reports_view(request):
+    dept_submissions = Department.objects.annotate(
+        sub_count=Count('courses__assignments__submissions')
+    ).values('name', 'code', 'sub_count')
+    
+    grade_distribution = Grade.objects.values('grade').annotate(
+        count=Count('id')
+    ).order_by('grade')
+    
+    student_performance = StudentProfile.objects.annotate(
+        avg_score=Avg('submissions__grade_record__score'),
+        sub_count=Count('submissions')
+    ).values('user__full_name', 'matric_number', 'avg_score', 'sub_count').order_by('-avg_score')[:20]
+
+    export_format = request.GET.get('export', '')
+    if export_format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="student_performance_report.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['Student Name', 'Matric Number', 'Average Score', 'Submissions Count'])
+        for record in student_performance:
+            writer.writerow([
+                record['user__full_name'],
+                record['matric_number'],
+                record['avg_score'] or 'N/A',
+                record['sub_count']
+            ])
+        return response
+        
+    context = {
+        'dept_submissions': dept_submissions,
+        'grade_distribution': grade_distribution,
+        'student_performance': student_performance,
+    }
+    return render(request, 'submissions/reports.html', context)
+
+
+# ---------- Notifications ----------
+@login_required
+def notifications_list(request):
+    notifications = request.user.notifications.all()[:50]
+    return render(request, 'submissions/notifications.html', {
+        'notifications': notifications
+    })
+
+
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, recipient=request.user)
+    notification.is_read = True
+    notification.save()
+    return JsonResponse({'status': 'success'})
+
+
+# ---------- REST API ViewSets ----------
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-# Create separate API apps for students and lecturers
-# students/api/views.py
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = StudentProfile.objects.all()
     permission_classes = [permissions.IsAuthenticated]
@@ -594,19 +580,16 @@ class StudentViewSet(viewsets.ModelViewSet):
         if hasattr(self.request.user, 'student_profile'):
             return self.queryset.filter(user=self.request.user)
         elif hasattr(self.request.user, 'lecturer_profile'):
-            # Lecturers can see their department's students
             return self.queryset.filter(department=self.request.user.lecturer_profile.department)
         return self.queryset.none()
     
     @action(detail=True, methods=['get'])
     def assignments(self, request, pk=None):
         student = self.get_object()
-        assignments = Assignment.objects.filter(student=student)
-        # Return serialized assignments
-        return Response([])
+        submissions = Submission.objects.filter(student=student)
+        return Response([{"id": s.id, "assignment": s.assignment.title, "status": s.status} for s in submissions])
 
 
-# lecturers/api/views.py
 class LecturerViewSet(viewsets.ModelViewSet):
     queryset = LecturerProfile.objects.all()
     permission_classes = [permissions.IsAuthenticated]
@@ -620,8 +603,7 @@ class LecturerViewSet(viewsets.ModelViewSet):
     def courses(self, request, pk=None):
         lecturer = self.get_object()
         courses = Course.objects.filter(lecturer=lecturer)
-        # Return serialized courses
-        return Response([])
+        return Response([{"id": c.id, "code": c.code, "title": c.title} for c in courses])
 
 
 @login_required

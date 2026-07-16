@@ -132,30 +132,145 @@ class Course(models.Model):
         return f"{self.code} - {self.title}"
 
 
-# ---------- Assignment Model ----------
+# ---------- Academic Session & Semester ----------
+class AcademicSession(models.Model):
+    name = models.CharField(max_length=20, unique=True, help_text="e.g. 2025/2026")
+    is_active = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.name
+        
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            AcademicSession.objects.filter(is_active=True).update(is_active=False)
+        super().save(*args, **kwargs)
+
+
+class Semester(models.Model):
+    SEMESTERS = [
+        ('first', 'First Semester'),
+        ('second', 'Second Semester'),
+    ]
+    name = models.CharField(max_length=20, choices=SEMESTERS, unique=True)
+    is_active = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return self.get_name_display()
+        
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            Semester.objects.filter(is_active=True).update(is_active=False)
+        super().save(*args, **kwargs)
+
+
+# ---------- Assignment Model (Lecturer Prompt) ----------
 class Assignment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='assignments')
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    file = CloudinaryField('file', null=True, blank=True)
-    date_uploaded = models.DateTimeField(auto_now_add=True)
-    submission_date = models.DateTimeField(auto_now=True)
-    deadline = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=[
+    file = CloudinaryField('file', null=True, blank=True, help_text="Supporting document or instructions")
+    session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name='assignments')
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE, related_name='assignments')
+    deadline = models.DateTimeField(help_text="Due date and time")
+    created_by = models.ForeignKey(LecturerProfile, on_delete=models.SET_NULL, null=True, related_name='created_assignments')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"{self.title} - {self.course.code}"
+
+
+# ---------- Submission Model (Student Upload) ----------
+class Submission(models.Model):
+    STATUS_CHOICES = [
         ('pending', 'Pending Review'),
         ('under_review', 'Under Review'),
         ('graded', 'Graded'),
         ('returned', 'Returned for Revision'),
-    ], default='pending')
-    grade = models.CharField(max_length=5, blank=True, null=True)
-    score = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    feedback = models.TextField(blank=True, null=True)
-    graded_by = models.ForeignKey(LecturerProfile, on_delete=models.SET_NULL, null=True, blank=True)
-    graded_date = models.DateTimeField(null=True, blank=True)
+    ]
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='submissions')
+    file = CloudinaryField('file', null=True, blank=True)
+    date_uploaded = models.DateTimeField(auto_now_add=True)
+    submission_date = models.DateTimeField(auto_now=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     
     class Meta:
         ordering = ['-date_uploaded']
+        unique_together = ('assignment', 'student')
+        
+    def __str__(self):
+        return f"{self.assignment.title} - {self.student.matric_number}"
+
+    @property
+    def course(self):
+        return self.assignment.course
+
+    @property
+    def title(self):
+        return self.assignment.title
+
+    @property
+    def description(self):
+        return self.assignment.description
+
+    @property
+    def deadline(self):
+        return self.assignment.deadline
+
+    @property
+    def grade(self):
+        return self.grade_record.grade if hasattr(self, 'grade_record') else None
+
+    @property
+    def score(self):
+        return self.grade_record.score if hasattr(self, 'grade_record') else None
+
+    @property
+    def feedback(self):
+        return self.grade_record.feedback if hasattr(self, 'grade_record') else None
+
+    @property
+    def graded_by(self):
+        return self.grade_record.graded_by if hasattr(self, 'grade_record') else None
+
+    @property
+    def graded_date(self):
+        return self.grade_record.graded_date if hasattr(self, 'grade_record') else None
+
+
+# ---------- Grade Model ----------
+class Grade(models.Model):
+    submission = models.OneToOneField(Submission, on_delete=models.CASCADE, related_name='grade_record')
+    grade = models.CharField(max_length=5, choices=[
+        ('A', 'A'),
+        ('B', 'B'),
+        ('C', 'C'),
+        ('D', 'D'),
+        ('F', 'F'),
+    ])
+    score = models.DecimalField(max_digits=5, decimal_places=2)
+    feedback = models.TextField(blank=True, null=True)
+    graded_by = models.ForeignKey(LecturerProfile, on_delete=models.SET_NULL, null=True, related_name='grades_given')
+    graded_date = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.title} - {self.student.matric_number}"
+        return f"Grade {self.grade} ({self.score}) for {self.submission}"
+
+
+# ---------- Notification Model ----------
+class Notification(models.Model):
+    recipient = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='notifications')
+    sender = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_notifications')
+    message = models.TextField()
+    link = models.CharField(max_length=255, blank=True, null=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f"Notification for {self.recipient.username} - {self.message[:30]}"

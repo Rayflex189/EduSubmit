@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 import os  # Added for file validation
 from .models import (
     UserProfile, StudentProfile, LecturerProfile, 
-    Faculty, Department, Level, Assignment
+    Faculty, Department, Level, Assignment, Submission, Grade, AcademicSession, Semester
 )
 
 class UserRegistrationForm(UserCreationForm):
@@ -120,8 +120,15 @@ class UserRegistrationForm(UserCreationForm):
             
             if not matric_number:
                 self.add_error('matric_number', 'Matric number is required for students.')
-            elif StudentProfile.objects.filter(matric_number=matric_number).exists():
-                self.add_error('matric_number', 'This matric number is already registered.')
+            else:
+                import re
+                matric_number = matric_number.strip().upper()
+                cleaned_data['matric_number'] = matric_number
+                pattern = r'^UAT\d{2}/\d{2}/\d{2}/\d{4}$'
+                if not re.match(pattern, matric_number):
+                    self.add_error('matric_number', 'Matric number must be in the format: UAT23/03/04/3001')
+                elif StudentProfile.objects.filter(matric_number=matric_number).exists():
+                    self.add_error('matric_number', 'This matric number is already registered.')
             
             if not admission_year:  # Validate admission_year is provided
                 self.add_error('admission_year', 'Admission year is required for students.')
@@ -328,15 +335,18 @@ class LecturerProfileForm(forms.ModelForm):
 class AssignmentForm(forms.ModelForm):
     class Meta:
         model = Assignment
-        fields = ['title', 'description', 'file', 'deadline']
+        fields = ['course', 'title', 'description', 'file', 'session', 'semester', 'deadline']
         widgets = {
+            'course': forms.Select(attrs={'class': 'form-select'}),
+            'session': forms.Select(attrs={'class': 'form-select'}),
+            'semester': forms.Select(attrs={'class': 'form-select'}),
             'title': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Enter assignment title'
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-textarea',
-                'placeholder': 'Optional description',
+                'placeholder': 'Optional instructions or description',
                 'rows': 4
             }),
             'file': forms.ClearableFileInput(attrs={
@@ -347,7 +357,26 @@ class AssignmentForm(forms.ModelForm):
                 'class': 'form-input'
             }),
         }
-    
+        
+    def __init__(self, *args, **kwargs):
+        lecturer = kwargs.pop('lecturer', None)
+        super().__init__(*args, **kwargs)
+        if lecturer:
+            self.fields['course'].queryset = Course.objects.filter(lecturer=lecturer)
+        self.fields['session'].queryset = AcademicSession.objects.all()
+        self.fields['semester'].queryset = Semester.objects.all()
+
+
+class SubmissionForm(forms.ModelForm):
+    class Meta:
+        model = Submission
+        fields = ['file']
+        widgets = {
+            'file': forms.ClearableFileInput(attrs={
+                'class': 'file-input'
+            }),
+        }
+        
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
@@ -363,26 +392,123 @@ class AssignmentForm(forms.ModelForm):
                 raise forms.ValidationError(
                     f"File type not supported. Allowed types: {', '.join(allowed_extensions)}"
                 )
-        
+        else:
+            raise forms.ValidationError("You must upload a file.")
         return file
 
 
 class GradeAssignmentForm(forms.ModelForm):
+    status = forms.ChoiceField(
+        choices=Submission.STATUS_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    score = forms.DecimalField(
+        min_value=0,
+        max_value=100,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-input',
+            'step': '0.1'
+        })
+    )
+    
     class Meta:
-        model = Assignment
-        fields = ['grade', 'score', 'feedback', 'status']
+        model = Grade
+        fields = ['grade', 'score', 'feedback']
         widgets = {
-            'grade': forms.Select(attrs={'class': 'form-select'}),
-            'score': forms.NumberInput(attrs={
-                'class': 'form-input',
-                'step': '0.1',
-                'min': '0',
-                'max': '100'
-            }),
+            'grade': forms.Select(choices=[
+                ('A', 'A'),
+                ('B', 'B'),
+                ('C', 'C'),
+                ('D', 'D'),
+                ('F', 'F'),
+            ], attrs={'class': 'form-select'}),
             'feedback': forms.Textarea(attrs={
                 'class': 'form-textarea',
                 'rows': 4,
                 'placeholder': 'Provide feedback to the student'
             }),
-            'status': forms.Select(attrs={'class': 'form-select'}),
         }
+
+
+class StudentProfileEditForm(forms.ModelForm):
+    full_name = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-input block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors',
+            'placeholder': 'Full Name'
+        })
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-input block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors',
+            'placeholder': 'Email Address'
+        })
+    )
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors',
+            'placeholder': 'Leave blank to keep current password'
+        }),
+        help_text="Leave blank if you do not want to change your password."
+    )
+    confirm_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors',
+            'placeholder': 'Confirm new password'
+        })
+    )
+
+    class Meta:
+        model = StudentProfile
+        fields = ['phone_number']
+        widgets = {
+            'phone_number': forms.TextInput(attrs={
+                'class': 'form-input block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-colors',
+                'placeholder': 'Phone Number'
+            })
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields['full_name'].initial = self.instance.user.full_name
+            self.fields['email'].initial = self.instance.user.email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        confirm_password = cleaned_data.get('confirm_password')
+
+        if password or confirm_password:
+            if password != confirm_password:
+                self.add_error('confirm_password', 'Passwords do not match.')
+
+        # Email uniqueness check
+        email = cleaned_data.get('email')
+        if email:
+            qs = UserProfile.objects.filter(email=email)
+            if self.instance and self.instance.user:
+                qs = qs.exclude(id=self.instance.user.id)
+            if qs.exists():
+                self.add_error('email', 'This email is already taken.')
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        student_profile = super().save(commit=False)
+        user = student_profile.user
+        user.full_name = self.cleaned_data['full_name']
+        user.email = self.cleaned_data['email']
+        
+        password = self.cleaned_data.get('password')
+        if password:
+            user.set_password(password)
+            
+        if commit:
+            user.save()
+            student_profile.save()
+        return student_profile

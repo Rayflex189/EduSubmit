@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     UserProfile, StudentProfile, LecturerProfile, 
-    Faculty, Department, Level, Course, Assignment
+    Faculty, Department, Level, Course, Assignment,
+    AcademicSession, Semester, Submission, Grade, Notification
 )
 from django.utils.translation import gettext_lazy as _
 
@@ -116,12 +117,8 @@ class LecturerProfileAdmin(admin.ModelAdmin):
             obj.user.is_staff = True
             obj.user.save()
             
-            # Create their custom admin site
             lecturer_site = LecturerAdminSite(obj, name=f'lecturer_{obj.staff_id}')
-            # Register models they can access
-            lecturer_site.register(Course, CourseAdmin)
-            lecturer_site.register(Assignment, AssignmentAdmin)
-            # Store the site instance (you might want to store this in cache or a dedicated model)
+            register_lecturer_admin_models(lecturer_site)
 
 
 @admin.register(Course)
@@ -131,43 +128,80 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = ('code', 'title')
     autocomplete_fields = ['department', 'level', 'lecturer']
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if hasattr(request.user, 'lecturer_profile') and not request.user.is_superuser:
+            return qs.filter(lecturer=request.user.lecturer_profile)
+        return qs
+
 
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'student', 'course', 'status', 'grade', 'date_uploaded')
-    list_filter = ('status', 'course', 'date_uploaded')
-    search_fields = ('title', 'student__matric_number', 'course__code')
-    readonly_fields = ('date_uploaded', 'submission_date')
-    autocomplete_fields = ['course', 'student', 'graded_by']
+    list_display = ('title', 'course', 'session', 'semester', 'deadline', 'created_by')
+    list_filter = ('course', 'session', 'semester', 'deadline')
+    search_fields = ('title', 'course__code', 'course__title')
+    autocomplete_fields = ['course', 'session', 'semester', 'created_by']
 
-
-# Base admin classes for lecturer-specific views
-class CourseAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if hasattr(request.user, 'lecturer_profile'):
-            return qs.filter(lecturer=request.user.lecturer_profile)
+        if hasattr(request.user, 'lecturer_profile') and not request.user.is_superuser:
+            return qs.filter(created_by=request.user.lecturer_profile)
         return qs
-    
-    def has_module_permission(self, request):
-        return hasattr(request.user, 'lecturer_profile')
 
-
-class AssignmentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'student', 'course', 'status', 'grade', 'date_uploaded')
-    list_filter = ('status', 'course')
-    readonly_fields = ('date_uploaded', 'submission_date', 'student', 'course')
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if hasattr(request.user, 'lecturer_profile'):
-            return qs.filter(course__lecturer=request.user.lecturer_profile)
-        return qs
-    
-    def has_module_permission(self, request):
-        return hasattr(request.user, 'lecturer_profile')
-    
     def save_model(self, request, obj, form, change):
-        if not obj.graded_by and hasattr(request.user, 'lecturer_profile'):
-            obj.graded_by = request.user.lecturer_profile
+        if not obj.created_by and hasattr(request.user, 'lecturer_profile'):
+            obj.created_by = request.user.lecturer_profile
         super().save_model(request, obj, form, change)
+
+
+@admin.register(AcademicSession)
+class AcademicSessionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_active')
+    search_fields = ('name',)
+
+
+@admin.register(Semester)
+class SemesterAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_active')
+    search_fields = ('name',)
+
+
+@admin.register(Submission)
+class SubmissionAdmin(admin.ModelAdmin):
+    list_display = ('assignment', 'student', 'status', 'date_uploaded')
+    list_filter = ('status', 'assignment__course')
+    search_fields = ('assignment__title', 'student__matric_number')
+    readonly_fields = ('date_uploaded', 'submission_date')
+    autocomplete_fields = ['assignment', 'student']
+
+
+@admin.register(Grade)
+class GradeAdmin(admin.ModelAdmin):
+    list_display = ('submission', 'grade', 'score', 'graded_by', 'graded_date')
+    list_filter = ('grade', 'graded_by')
+    search_fields = ('submission__assignment__title', 'submission__student__matric_number')
+    autocomplete_fields = ['submission', 'graded_by']
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('recipient', 'message', 'is_read', 'created_at')
+    list_filter = ('is_read', 'created_at')
+    search_fields = ('recipient__username', 'message')
+    autocomplete_fields = ['recipient', 'sender']
+
+
+def register_lecturer_admin_models(site):
+    site.register(Course, CourseAdmin)
+    site.register(Assignment, AssignmentAdmin)
+    site.register(AcademicSession, AcademicSessionAdmin)
+    site.register(Semester, SemesterAdmin)
+    site.register(LecturerProfile, LecturerProfileAdmin)
+    site.register(Department, DepartmentAdmin)
+    site.register(Level, LevelAdmin)
+    site.register(StudentProfile, StudentProfileAdmin)
+    site.register(UserProfile, CustomUserAdmin)
+    site.register(Faculty, FacultyAdmin)
+    site.register(Submission, SubmissionAdmin)
+    site.register(Grade, GradeAdmin)
+    site.register(Notification, NotificationAdmin)

@@ -2,6 +2,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from django.utils.functional import SimpleLazyObject
+from rest_framework.routers import DefaultRouter
 from . import views
 from .admin import LecturerAdminSite
 
@@ -25,6 +26,13 @@ urlpatterns = [
     path('lecturer/courses/', views.lecturer_courses, name='lecturer_courses'),
     path('lecturer/grade/<int:assignment_id>/', views.grade_assignment, name='grade_assignment'),
     path('lecturer/students/', views.lecturer_students, name='lecturer_students'),
+    path('lecturer/create-assignment/', views.create_assignment, name='create_assignment'),
+
+    # Global Tools
+    path('search/', views.global_search, name='global_search'),
+    path('reports/', views.reports_view, name='reports_view'),
+    path('notifications/', views.notifications_list, name='notifications_list'),
+    path('notifications/read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
 
 
 
@@ -56,6 +64,14 @@ urlpatterns = [
          name='password_reset_complete'),
 ]
 
+# REST API Routing
+router = DefaultRouter()
+router.register('api/students', views.StudentViewSet, basename='api-student')
+router.register('api/lecturers', views.LecturerViewSet, basename='api-lecturer')
+urlpatterns += [
+    path('', include(router.urls)),
+]
+
 # Add this at the BOTTOM of your urls.py AFTER successful migrations
 import sys
 
@@ -70,10 +86,8 @@ if 'makemigrations' not in sys.argv and 'migrate' not in sys.argv:
             for lecturer in LecturerProfile.objects.all():
                 lecturer_site = LecturerAdminSite(lecturer, name=f'lecturer_{lecturer.staff_id}')
                 # Register models on the site
-                from .models import Course, Assignment
-                from .admin import CourseAdmin, AssignmentAdmin
-                lecturer_site.register(Course, CourseAdmin)
-                lecturer_site.register(Assignment, AssignmentAdmin)
+                from .admin import register_lecturer_admin_models
+                register_lecturer_admin_models(lecturer_site)
                 urls.append(path(f'lecturer/{lecturer.staff_id}/admin/', lecturer_site.urls))
             return urls
         

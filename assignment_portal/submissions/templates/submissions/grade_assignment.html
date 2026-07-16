@@ -236,15 +236,15 @@
                             <i class="fas fa-graduation-cap mr-1"></i>
                             Grade
                         </label>
-                        <div class="flex space-x-2 mb-3">
-                            {% for grade in 'A,B+,B,C+,C,D,E,F'|split:',' %}
-                            <button type="button" 
-                                    onclick="setGrade('{{ grade }}')"
-                                    class="flex-1 py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn"
-                                    data-grade="{{ grade }}">
-                                {{ grade }}
-                            </button>
-                            {% endfor %}
+                        <div class="flex flex-wrap gap-2 mb-3">
+                            <button type="button" onclick="setGrade('A')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="A">A</button>
+                            <button type="button" onclick="setGrade('B+')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="B+">B+</button>
+                            <button type="button" onclick="setGrade('B')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="B">B</button>
+                            <button type="button" onclick="setGrade('C+')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="C+">C+</button>
+                            <button type="button" onclick="setGrade('C')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="C">C</button>
+                            <button type="button" onclick="setGrade('D')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="D">D</button>
+                            <button type="button" onclick="setGrade('E')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="E">E</button>
+                            <button type="button" onclick="setGrade('F')" class="flex-1 min-w-[3rem] py-2 text-center text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 grade-btn" data-grade="F">F</button>
                         </div>
                         <input type="text" 
                                name="grade" 
@@ -284,12 +284,12 @@
                             Status
                         </label>
                         <div class="grid grid-cols-2 gap-2">
-                            {% for status_value, status_label in assignment_status_choices %}
+                            {% for status_value, status_label in form.status.field.choices %}
                             <label class="inline-flex items-center">
                                 <input type="radio" 
                                        name="status" 
                                        value="{{ status_value }}"
-                                       {% if assignment.status == status_value %}checked{% endif %}
+                                       {% if assignment.status == status_value or form.status.value == status_value %}checked{% endif %}
                                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300">
                                 <span class="ml-2 text-sm text-gray-700">{{ status_label }}</span>
                             </label>
@@ -378,11 +378,6 @@
 
 {% block extra_js %}
 <script>
-    // Template filter for splitting string
-    Handlebars.registerHelper('split', function(string, delimiter) {
-        return string.split(delimiter);
-    });
-
     // Character counter for feedback
     const feedbackTextarea = document.getElementById('feedback');
     const charCountSpan = document.getElementById('charCount');
