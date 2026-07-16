@@ -194,9 +194,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For developm
 # EMAIL_HOST_PASSWORD = 'your-password'
 
 # Default from email
-DEFAULT_FROM_EMAIL = 'noreply@edumanage.edu'
-SERVER_EMAIL = 'server@edumanage.edu'
+DEFAULT_FROM_EMAIL = 'noreply@edusubmit.edu'
+SERVER_EMAIL = 'server@edusubmit.edu'
 
 # Site information (for password reset emails)
-SITE_NAME = "EduManage Pro"
+SITE_NAME = "EduSubmit Portal"
 DOMAIN = "localhost:8000"  # Change this to your domain in production

@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}EduManage Pro{% endblock %}</title>
+    <title>{% block title %}EduSubmit Portal{% endblock %}</title>
+    
+    <!-- PWA Settings -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="icon" type="image/svg+xml" href="/static/submissions/logo.svg">
     
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -178,13 +183,11 @@
             <div class="flex justify-between h-16">
                 <!-- Logo and Brand -->
                 <div class="flex items-center">
-                    <a href="{% url 'student_dashboard' %}" class="flex items-center space-x-3 group">
-                        <div class="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                            <i class="fas fa-graduation-cap text-white text-lg"></i>
-                        </div>
+                    <a href="{% if user.is_authenticated %}{% if user.user_type == 'student' %}{% url 'student_dashboard' %}{% else %}{% url 'lecturer_dashboard' %}{% endif %}{% else %}{% url 'login' %}{% endif %}" class="flex items-center space-x-3 group">
+                        <img src="/static/submissions/logo.svg" alt="EduSubmit Logo" class="h-10 w-10 shadow-md group-hover:shadow-lg transition-shadow">
                         <div>
-                            <h1 class="text-xl font-bold text-gray-900">EduManage</h1>
-                            <p class="text-xs text-gray-500 -mt-1">Academic System</p>
+                            <h1 class="text-xl font-bold text-gray-900">EduSubmit</h1>
+                            <p class="text-xs text-gray-500 -mt-1">Digital Assignment Portal</p>
                         </div>
                     </a>
                 </div>
@@ -448,7 +451,7 @@
                 <!-- Page-specific content goes here -->
                 <div class="text-center py-12">
                     <i class="fas fa-book-open text-6xl text-gray-300 mb-4"></i>
-                    <h2 class="text-2xl font-semibold text-gray-700 mb-2">Welcome to EduManage</h2>
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-2">Welcome to EduSubmit</h2>
                     <p class="text-gray-600 max-w-md mx-auto">Select an option from the navigation menu to get started with your academic activities.</p>
                 </div>
                 {% endblock %}
@@ -463,12 +466,10 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>
                     <div class="flex items-center mb-4">
-                        <div class="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center mr-3">
-                            <i class="fas fa-graduation-cap text-white"></i>
-                        </div>
+                        <img src="/static/submissions/logo.svg" alt="EduSubmit Logo" class="h-10 w-10 shadow-md mr-3">
                         <div>
-                            <h3 class="font-bold text-lg">EduManage Pro</h3>
-                            <p class="text-sm text-gray-400">Academic Excellence System</p>
+                            <h3 class="font-bold text-lg">EduSubmit</h3>
+                            <p class="text-sm text-gray-400">Digital Assignment Portal</p>
                         </div>
                     </div>
                     <p class="text-gray-400 text-sm">
@@ -530,8 +531,8 @@
             </div>
             
             <div class="border-t border-gray-800 mt-8 pt-8 text-center">
-                <p class="text-gray-500 text-sm">&copy; {% now "Y" %} EduManage Pro. All rights reserved.</p>
-                <p class="text-gray-600 text-xs mt-2">Version 2.1.0 • Academic Management System</p>
+                <p class="text-gray-500 text-sm">&copy; {% now "Y" %} EduSubmit. All rights reserved.</p>
+                <p class="text-gray-600 text-xs mt-2">Version 2.1.0 • Digital Assignment Portal</p>
             </div>
         </div>
     </footer>
@@ -754,7 +755,7 @@
         });
 
         // Export utilities to global scope
-        window.EduManage = {
+        window.EduSubmit = {
             showNotification,
             showLoading,
             hideLoading,
@@ -763,6 +764,15 @@
             setupFilePreview,
             toggleDarkMode
         };
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered successfully!', reg.scope))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
+        }
     </script>
 
     {% block extra_js %}{% endblock %}

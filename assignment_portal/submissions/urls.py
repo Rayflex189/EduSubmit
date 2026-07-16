@@ -2,11 +2,14 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from django.utils.functional import SimpleLazyObject
+from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 from . import views
 from .admin import LecturerAdminSite
 
 urlpatterns = [
+    path('manifest.json', TemplateView.as_view(template_name='submissions/manifest.json', content_type='application/json'), name='manifest_json'),
+    path('sw.js', TemplateView.as_view(template_name='submissions/sw.js', content_type='application/javascript'), name='sw_js'),
     path('', lambda request: redirect('login')),
     path('register/', views.register, name='register'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
